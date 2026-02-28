@@ -127,7 +127,7 @@ gmr-retarget video robot="unitree_g1":
     fi
 
     ABS_RESULTS="$(realpath "$PHMR_RESULTS")"
-    OUT_DIR="$RESULTS_DIR/$NAME"
+    OUT_DIR="$(cd . && pwd)/$RESULTS_DIR/$NAME"
     OUT_FILE="$OUT_DIR/retarget_${ROBOT}.pkl"
 
     if [ -f "$OUT_FILE" ]; then
@@ -142,7 +142,7 @@ gmr-retarget video robot="unitree_g1":
         .venv/bin/python scripts/prompthmr_to_robot.py \
             --results_file "$ABS_RESULTS" \
             --robot "$ROBOT" \
-            --save_path "$(realpath "$OUT_FILE")"
+            --save_path "$OUT_FILE"
     )
     echo "[DONE] Retarget → $OUT_FILE"
 

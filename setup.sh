@@ -108,10 +108,13 @@ else
         # Main requirements
         uv pip install -r requirements.txt
 
-        # chumpy (editable, legacy)
-        if [ ! -d python_libs/chumpy ]; then
+        # chumpy (editable, legacy — needs pip in env for its setup.py)
+        # The repo tracks python_libs/chumpy as a gitlink — remove and re-clone
+        if [ ! -f python_libs/chumpy/setup.py ]; then
+            rm -rf python_libs/chumpy
             git clone https://github.com/Arthur151/chumpy python_libs/chumpy
         fi
+        uv pip install pip
         uv pip install -e python_libs/chumpy --no-build-isolation
 
         # Custom wheels (download from Google Drive if missing)
