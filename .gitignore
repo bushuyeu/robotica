@@ -1,0 +1,28 @@
+# Sub-repos (cloned by setup.sh)
+PromptHMR/
+GMR/
+GR00T-WholeBodyControl/
+
+# Environment
+.env
+.venv/
+
+# Results & data artifacts
+results/
+data/videos/*.mp4
+data/videos/*.avi
+data/videos/*.mov
+data/videos/*.mkv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+*~
+*.swp
