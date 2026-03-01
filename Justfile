@@ -51,6 +51,14 @@ check:
         && ok "GMR body model symlinks" || fail "GMR symlinks missing"
 
     echo ""
+    echo "═══ Checking GR00T Docker ═══"
+    if docker images 2>/dev/null | grep -q 'gr00t_wbc-deploy-root'; then
+        ok "GR00T Docker image"
+    else
+        fail "GR00T Docker image missing (run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root)"
+    fi
+
+    echo ""
     echo "═══ Checking data dirs ═══"
     [ -d "$VIDEO_DIR" ]   && ok "$VIDEO_DIR"   || fail "$VIDEO_DIR missing"
     [ -d "$RESULTS_DIR" ] && ok "$RESULTS_DIR" || fail "$RESULTS_DIR missing"
@@ -179,24 +187,57 @@ pipeline-batch robot="unitree_g1":
         just pipeline "$v" "{{robot}}"
     done
 
-# GR00T simulation — advisory only
+# Verify GR00T Docker image is available
+groot-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+    if docker images 2>/dev/null | grep -q 'gr00t_wbc-deploy-root'; then
+        echo -e "${GREEN}[OK]${NC} GR00T Docker image found"
+    else
+        echo -e "${RED}[FAIL]${NC} GR00T Docker image missing. Run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root"
+        exit 1
+    fi
+
+# GR00T simulation — interactive Docker session
+# Requires two terminals: one for the control loop, one for the publisher.
+# This recipe prints the exact commands to run.
 groot-sim video:
     #!/usr/bin/env bash
+    set -euo pipefail
+    NAME="$(basename "{{video}}" | sed 's/\.[^.]*$//')"
+    RETARGET="$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl"
+    if [ ! -f "$RETARGET" ]; then
+        echo "[ERROR] No retarget results: $RETARGET"
+        echo "Run first: just gmr-retarget {{video}}"
+        exit 1
+    fi
+    ABS_RETARGET="$(realpath "$RETARGET")"
+    ABS_GROOT="$(realpath "$GROOT_DIR")"
+    ABS_RESULTS="$(realpath "$RESULTS_DIR")"
+
     echo "═══ GR00T Simulation ═══"
     echo ""
-    echo "GR00T-WholeBodyControl runs inside Docker."
+    echo "This requires TWO terminals inside the same Docker container."
     echo ""
-    echo "1. Start the container:"
-    echo "   cd $GROOT_DIR"
-    echo "   ./docker/run_docker.sh --install --root"
+    echo "1. Start the container (Terminal 1):"
+    echo "   cd $GROOT_DIR && ./docker/run_docker.sh --root"
     echo ""
-    NAME="$(basename "{{video}}" | sed 's/\.[^.]*$//')"
-    RETARGET="$(realpath "$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl" 2>/dev/null || echo "$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl")"
-    echo "2. Inside the container, run:"
+    echo "2. Inside Terminal 1, start the control loop:"
+    echo "   export PATH=/root/venv/bin:\$PATH && source /opt/ros/humble/setup.bash"
+    echo "   python gr00t_wbc/control/main/teleop/run_g1_control_loop.py"
+    echo ""
+    echo "3. In Terminal 2, attach to the same container:"
+    echo "   docker exec -it gr00t_wbc-bash-root /bin/bash"
+    echo ""
+    echo "4. Inside Terminal 2, publish the motion:"
+    echo "   export PATH=/root/venv/bin:\$PATH && source /opt/ros/humble/setup.bash"
     echo "   python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py \\"
-    echo "       --results $RETARGET \\"
+    echo "       --results /root/Projects/results/$NAME/retarget_unitree_g1.pkl \\"
     echo "       --loop --teleop-frequency 30 --hand-mode zero \\"
-    echo "       --speed 0.5 --initial-pose-seconds 5.0 --upper-body-only"
+    echo "       --speed 0.25 --initial-pose-seconds 5.0 --upper-body-only"
+    echo ""
+    echo "5. In Terminal 1 (NOT the viewer), press ']' to activate, wait 5s, then press '9' to release elastic band."
 
 # List all pipeline results
 results:
