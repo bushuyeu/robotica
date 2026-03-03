@@ -2,9 +2,20 @@
 
 Meta-repo for the video-to-robot teleoperation pipeline.
 
-```
-Video → PromptHMR → GMR → GR00T → Unitree G1
-        (3D pose)   (retarget)  (sim/hardware)
+> New to the terminology? See the [Glossary](docs/glossary.md) for beginner-friendly definitions of all technical terms.
+
+```mermaid
+flowchart LR
+    V["Input Video<br/><i>.mp4 / .avi / .mov</i>"]
+    P["PromptHMR<br/><b>3D Pose Estimation</b>"]
+    G["GMR<br/><b>Joint Retargeting</b>"]
+    W["GR00T-WBC<br/><b>Sim / Hardware</b>"]
+    R["Unitree G1"]
+
+    V -->|"frames"| P
+    P -->|"SMPL-X .pkl<br/>(55 joints, world coords)"| G
+    G -->|"robot .pkl<br/>(29 DoF, quat rotations)"| W
+    W -->|"motor commands"| R
 ```
 
 ## Architecture
@@ -33,7 +44,7 @@ robotica/
 ## Quickstart
 
 ```bash
-git clone <this-repo> robotica && cd robotica
+git clone https://github.com/bushuyeu/robotica robotica && cd robotica
 bash setup.sh       # clones repos, creates venvs, installs deps
 just check           # verify everything is set up
 ```
@@ -52,6 +63,12 @@ just check           # verify everything is set up
 | `just pipeline-batch [robot]` | Batch full pipeline |
 | `just groot-sim <video>` | Print GR00T Docker instructions |
 | `just results` | List all outputs |
+| `just drive-check` | Verify rclone + gdrive remote |
+| `just drive-list` | List Drive videos and local download status |
+| `just drive-sync` | Download new videos from Google Drive |
+| `just groot-copy <video>` | Copy retarget .pkl to standalone GR00T repo |
+| `just groot-copy-all` | Copy all retarget results to GR00T |
+| `just auto-pipeline [robot]` | Full flow: drive-sync + pipeline + groot-copy |
 | `just clean` | Delete results (with confirmation) |
 
 ## Data Flow
@@ -60,6 +77,12 @@ just check           # verify everything is set up
 2. `just phmr-run data/videos/my_video.mp4` — produces `results/my_video/phmr_results.pkl`
 3. `just gmr-retarget data/videos/my_video.mp4` — produces `results/my_video/retarget_unitree_g1.pkl`
 4. `just groot-sim data/videos/my_video.mp4` — prints Docker commands for simulation
+
+## Documentation
+
+- [Reproduction Guide](docs/reproduction-guide.md) — full walkthrough of the sim pipeline (Stages 1-3)
+- [Hardware Deployment Guide](docs/hardware-deployment-guide.md) — deploying on a physical Unitree G1
+- [Glossary](docs/glossary.md) — definitions of technical terms
 
 ## Notes
 

@@ -1,6 +1,11 @@
 set dotenv-load
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# Google Drive shared video folder ID
+DRIVE_FOLDER_ID := "11I9UZfqr_JanmgzVx3qM0zNF3YzqaEuW"
+# Standalone GR00T repo mounted by Docker
+GROOT_STANDALONE := env("HOME") / "Projects/GR00T-WholeBodyControl"
+
 # Default: list available recipes
 default:
     @just --list
@@ -269,6 +274,189 @@ results:
     else
         echo "  (none)"
     fi
+
+# ═══════════════════════════════════════════════════════════
+# Google Drive sync & auto-pipeline recipes
+# ═══════════════════════════════════════════════════════════
+
+# Verify rclone is installed and gdrive remote is configured
+drive-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+
+    if ! command -v rclone &>/dev/null; then
+        echo -e "${RED}[FAIL]${NC} rclone is not installed."
+        echo "  Install: curl https://rclone.org/install.sh | sudo bash"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK]${NC} rclone $(rclone version --check 2>/dev/null | head -1 || rclone version 2>/dev/null | head -1)"
+
+    if ! rclone listremotes 2>/dev/null | grep -q '^gdrive:'; then
+        echo -e "${RED}[FAIL]${NC} rclone remote 'gdrive' is not configured."
+        echo "  Run: rclone config"
+        echo "  Create a new remote named 'gdrive' with type 'drive' and scope 'drive.readonly'"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK]${NC} rclone remote 'gdrive' configured"
+
+# List videos in Google Drive and show local download status
+drive-list:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+
+    just drive-check
+
+    echo ""
+    echo "═══ Videos in Google Drive ═══"
+    echo ""
+
+    # List remote video files
+    REMOTE_FILES=$(rclone lsf "gdrive:" \
+        --drive-root-folder-id "{{DRIVE_FOLDER_ID}}" \
+        --include "*.{mp4,avi,mov,mkv,MP4,AVI,MOV,MKV}" 2>/dev/null || true)
+
+    if [ -z "$REMOTE_FILES" ]; then
+        echo "  (no video files found in Drive folder)"
+        exit 0
+    fi
+
+    TOTAL=0
+    LOCAL=0
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        TOTAL=$((TOTAL + 1))
+        if [ -f "$VIDEO_DIR/$file" ]; then
+            echo -e "  ${GREEN}[LOCAL]${NC} $file"
+            LOCAL=$((LOCAL + 1))
+        else
+            echo -e "  ${RED}[REMOTE]${NC} $file"
+        fi
+    done <<< "$REMOTE_FILES"
+
+    echo ""
+    echo "$LOCAL/$TOTAL videos downloaded locally"
+
+# Download new videos from Google Drive to data/videos/
+drive-sync:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; NC='\033[0m'
+
+    just drive-check
+
+    echo ""
+    echo "═══ Syncing videos from Google Drive ═══"
+    echo ""
+
+    mkdir -p "$VIDEO_DIR"
+
+    rclone copy "gdrive:" "$VIDEO_DIR" \
+        --drive-root-folder-id "{{DRIVE_FOLDER_ID}}" \
+        --include "*.{mp4,avi,mov,mkv,MP4,AVI,MOV,MKV}" \
+        --progress \
+        --verbose
+
+    echo ""
+    echo -e "${GREEN}[DONE]${NC} Videos synced to $VIDEO_DIR"
+
+# Copy retarget .pkl to standalone GR00T repo for Docker access
+groot-copy video:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+    NAME="$(basename "{{video}}" | sed 's/\.[^.]*$//')"
+
+    SRC="$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl"
+    DST="{{GROOT_STANDALONE}}/resources/poses/$NAME.pkl"
+
+    if [ ! -f "$SRC" ]; then
+        echo -e "${RED}[ERROR]${NC} No retarget results: $SRC"
+        echo "  Run first: just pipeline {{video}}"
+        exit 1
+    fi
+
+    if [ -f "$DST" ]; then
+        echo "[SKIP] Already copied: $DST"
+        exit 0
+    fi
+
+    mkdir -p "$(dirname "$DST")"
+    cp "$SRC" "$DST"
+    echo -e "${GREEN}[DONE]${NC} Copied $NAME.pkl → {{GROOT_STANDALONE}}/resources/poses/"
+
+# Copy all retarget results to standalone GR00T repo for Docker access
+groot-copy-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; NC='\033[0m'
+    shopt -s nullglob
+
+    PKLS=("$RESULTS_DIR"/*/retarget_unitree_g1.pkl)
+    if [ ${#PKLS[@]} -eq 0 ]; then
+        echo "No retarget results found in $RESULTS_DIR"
+        exit 0
+    fi
+
+    COPIED=0
+    SKIPPED=0
+    for pkl in "${PKLS[@]}"; do
+        NAME="$(basename "$(dirname "$pkl")")"
+        DST="{{GROOT_STANDALONE}}/resources/poses/$NAME.pkl"
+        if [ -f "$DST" ]; then
+            SKIPPED=$((SKIPPED + 1))
+        else
+            mkdir -p "$(dirname "$DST")"
+            cp "$pkl" "$DST"
+            echo -e "${GREEN}[COPIED]${NC} $NAME.pkl"
+            COPIED=$((COPIED + 1))
+        fi
+    done
+
+    echo ""
+    echo "Copied $COPIED, skipped $SKIPPED (already existed)"
+
+# Full auto-pipeline: drive-sync → pipeline-batch → groot-copy-all
+auto-pipeline robot="unitree_g1":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; NC='\033[0m'
+    shopt -s nullglob
+
+    echo "═══ Auto Pipeline ═══"
+    echo ""
+
+    # Count videos before sync
+    BEFORE=("$VIDEO_DIR"/*.{mp4,avi,mov,mkv,MP4,AVI,MOV,MKV})
+    BEFORE_COUNT=${#BEFORE[@]}
+
+    # Step 1: Sync from Drive
+    echo "── Step 1/3: Syncing videos from Google Drive ──"
+    just drive-sync
+
+    # Count videos after sync
+    AFTER=("$VIDEO_DIR"/*.{mp4,avi,mov,mkv,MP4,AVI,MOV,MKV})
+    AFTER_COUNT=${#AFTER[@]}
+    SYNCED=$((AFTER_COUNT - BEFORE_COUNT))
+
+    # Step 2: Run pipeline on all videos
+    echo ""
+    echo "── Step 2/3: Running PromptHMR + GMR pipeline ──"
+    just pipeline-batch "{{robot}}"
+
+    # Step 3: Copy results to GR00T
+    echo ""
+    echo "── Step 3/3: Copying retarget results to GR00T ──"
+    just groot-copy-all
+
+    # Summary
+    RETARGETS=("$RESULTS_DIR"/*/retarget_unitree_g1.pkl)
+    echo ""
+    echo "═══ Summary ═══"
+    echo -e "${GREEN}  Videos synced:${NC}      $SYNCED new (${AFTER_COUNT} total)"
+    echo -e "${GREEN}  Videos processed:${NC}   ${#RETARGETS[@]} with retarget results"
+    echo -e "${GREEN}  GR00T poses:${NC}        $(ls {{GROOT_STANDALONE}}/resources/poses/*.pkl 2>/dev/null | wc -l) files in standalone repo"
 
 # Delete all results (with confirmation)
 clean:
