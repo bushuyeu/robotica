@@ -1,3 +1,9 @@
+---
+layout: default
+title: Hardware Deployment
+nav_order: 3
+---
+
 # Hardware Deployment Guide — Unitree G1
 
 Step-by-step guide for deploying the video-to-robot teleoperation pipeline on a physical Unitree G1 humanoid.

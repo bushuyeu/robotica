@@ -239,10 +239,31 @@ if [ -f data/PXL_20260114_220015872.mp4 ]; then
     ok "Moved video to data/videos/"
 fi
 
+# ── J: Meta-repo venv (wandb + HF Hub) ───────────────────────────────────────
+echo ""
+echo "═══ J: Meta-repo venv (wandb + HF Hub) ═══"
+if [ -d "$SCRIPT_DIR/.venv" ]; then
+    skip "Meta-repo venv already exists"
+else
+    info "Creating meta-repo venv (Python 3.12)..."
+    (cd "$SCRIPT_DIR" && uv venv --python 3.12)
+    ok "Meta-repo venv created"
+fi
+
+if "$SCRIPT_DIR/.venv/bin/python" -c "import wandb" 2>/dev/null; then
+    skip "Meta-repo deps already installed"
+else
+    info "Installing meta-repo dependencies (wandb, huggingface-hub)..."
+    (cd "$SCRIPT_DIR" && uv pip install -e .)
+    ok "Meta-repo deps installed"
+fi
+
 echo ""
 echo "═══════════════════════════════════════"
 echo -e "${GREEN}Bootstrap complete!${NC}"
 echo "Next steps:"
 echo "  just check       — verify everything"
 echo "  just phmr-run <video>  — run PromptHMR"
+echo "  just wandb-login       — authenticate wandb"
+echo "  just hf-login          — authenticate HF Hub"
 echo "═══════════════════════════════════════"

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Reproduction Guide
+nav_order: 2
+---
+
 # Teleoperation from Recorded Video — Reproduction Guide
 
 Step-by-step guide for reproducing upper-body teleoperation of the Unitree G1 robot from recorded video.

@@ -21,6 +21,12 @@ __pycache__/
 dist/
 build/
 
+# wandb local logs
+wandb/
+
+# VS Code workspace
+*.code-workspace
+
 # OS
 .DS_Store
 Thumbs.db

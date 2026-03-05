@@ -1,3 +1,9 @@
+---
+layout: default
+title: Glossary
+nav_order: 5
+---
+
 # Glossary
 
 Quick reference for technical terms used throughout this project. Definitions are kept short and beginner-friendly.

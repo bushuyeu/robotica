@@ -1,0 +1,27 @@
+title: robotica
+description: "Video-to-Robot Teleoperation Pipeline for Unitree G1"
+url: "https://bushuyeu.github.io"
+baseurl: "/robotica"
+
+remote_theme: just-the-docs/just-the-docs
+
+color_scheme: dark
+
+aux_links:
+  "GitHub":
+    - "https://github.com/bushuyeu/robotica"
+  "wandb Dashboard":
+    - "https://wandb.ai/pavelbushuyeu-university-of-hawaii-system/robotica"
+
+nav_enabled: true
+search_enabled: true
+
+footer_content: "robotica &mdash; HAW-AI-I / University of Hawaii"
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+
+exclude:
+  - Gemfile
+  - Gemfile.lock

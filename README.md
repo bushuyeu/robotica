@@ -70,6 +70,12 @@ just check           # verify everything is set up
 | `just groot-copy-all` | Copy all retarget results to GR00T |
 | `just auto-pipeline [robot]` | Full flow: drive-sync + pipeline + groot-copy |
 | `just clean` | Delete results (with confirmation) |
+| `just monitor-setup` | Set up meta-repo venv (wandb + HF Hub) |
+| `just wandb-login` | Authenticate wandb |
+| `just hf-login` | Authenticate Hugging Face Hub |
+| `just pipeline-monitored <video>` | Single video with wandb logging |
+| `just pipeline-monitored-batch` | Batch pipeline with wandb + HF upload |
+| `just auto-pipeline-monitored` | Drive sync + pipeline + wandb + HF |
 
 ## Data Flow
 

@@ -3,8 +3,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Google Drive shared video folder ID
 DRIVE_FOLDER_ID := "11I9UZfqr_JanmgzVx3qM0zNF3YzqaEuW"
-# Standalone GR00T repo mounted by Docker
-GROOT_STANDALONE := env("HOME") / "Projects/GR00T-WholeBodyControl"
+# Standalone GR00T repo mounted by Docker (override via .env or env var)
+GROOT_STANDALONE := env_var_or_default("GROOT_STANDALONE", env("HOME") / "Projects/GR00T-WholeBodyControl")
 
 # Default: list available recipes
 default:
@@ -175,8 +175,8 @@ gmr-batch robot="unitree_g1":
 
 # Full pipeline: PromptHMR + GMR retarget
 pipeline video robot="unitree_g1":
-    just phmr-run {{video}}
-    just gmr-retarget {{video}} {{robot}}
+    just phmr-run "{{video}}"
+    just gmr-retarget "{{video}}" "{{robot}}"
 
 # Batch full pipeline
 pipeline-batch robot="unitree_g1":
@@ -248,6 +248,7 @@ groot-sim video:
 results:
     #!/usr/bin/env bash
     set -euo pipefail
+    shopt -s nullglob
     echo "═══ Pipeline Results ═══"
     echo ""
 
@@ -457,6 +458,44 @@ auto-pipeline robot="unitree_g1":
     echo -e "${GREEN}  Videos synced:${NC}      $SYNCED new (${AFTER_COUNT} total)"
     echo -e "${GREEN}  Videos processed:${NC}   ${#RETARGETS[@]} with retarget results"
     echo -e "${GREEN}  GR00T poses:${NC}        $(ls {{GROOT_STANDALONE}}/resources/poses/*.pkl 2>/dev/null | wc -l) files in standalone repo"
+
+# ═══════════════════════════════════════════════════════════
+# Monitored pipeline recipes (wandb + HF Hub)
+# ═══════════════════════════════════════════════════════════
+
+# Set up meta-repo venv with wandb + huggingface-hub
+monitor-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -d .venv ]; then
+        uv venv --python 3.12
+    fi
+    uv pip install -e .
+    echo "[OK] Meta-repo venv ready with wandb + huggingface-hub"
+
+# Login to wandb
+wandb-login:
+    .venv/bin/wandb login
+
+# Login to Hugging Face Hub
+hf-login:
+    .venv/bin/hf auth login
+
+# Single video with wandb monitoring
+pipeline-monitored video robot="unitree_g1" wandb_project="robotica":
+    .venv/bin/python -m robotica.pipeline_monitor \
+        --video "{{video}}" --robot "{{robot}}" --wandb-project "{{wandb_project}}"
+
+# Batch pipeline with wandb monitoring + HF upload
+pipeline-monitored-batch robot="unitree_g1" wandb_project="robotica":
+    .venv/bin/python -m robotica.pipeline_monitor \
+        --robot {{robot}} --wandb-project {{wandb_project}} --hf-upload
+
+# Full auto-pipeline with Drive sync + wandb + optional HF upload
+auto-pipeline-monitored robot="unitree_g1" wandb_project="robotica":
+    .venv/bin/python -m robotica.pipeline_monitor \
+        --robot {{robot}} --wandb-project {{wandb_project}} \
+        --drive-sync --hf-upload
 
 # Delete all results (with confirmation)
 clean:

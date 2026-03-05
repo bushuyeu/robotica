@@ -1,0 +1,15 @@
+[project]
+name = "robotica"
+version = "0.1.0"
+description = "Observability and artifact storage for the robotica video-to-robot pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "wandb>=0.19",
+    "huggingface-hub>=0.27",
+    "joblib>=1.4",
+    "numpy>=1.26",
+    "python-dotenv>=1.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["robotica*"]
