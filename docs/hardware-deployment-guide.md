@@ -147,66 +147,97 @@ If this works, the robot is booted and the network is ready.
 
 ## 3. Deployment Procedure
 
+The following example uses video `PXL_20260114_214954286` throughout. Replace with your video name as needed.
+
 ### 3.1 Prepare the retarget results
 
-Same as in simulation — copy the retarget `.pkl` to the Docker-accessible location:
+Copy all retarget `.pkl` files to the Docker-accessible location. From the host:
 
 ```bash
-mkdir -p ~/Projects/GR00T-WholeBodyControl/resources/poses/
-cp results/<video_name>/retarget_unitree_g1.pkl \
-   ~/Projects/GR00T-WholeBodyControl/resources/poses/<video_name>.pkl
+cd ~/Projects/robotica
+
+# Copy a single video
+just groot-copy PXL_20260114_214954286
+
+# Or copy all processed videos at once
+just groot-copy-all
 ```
 
-### 3.2 Terminal 1 — Start the control loop (hardware mode)
+Then copy to the Docker-mounted path (the Docker container mounts `~/Projects/robotica/GR00T-WholeBodyControl`, not the standalone directory):
 
 ```bash
-cd ~/Projects/robotica/GR00T-WholeBodyControl
-
-# Start Docker with deploy flag for hardware access
-./docker/run_docker.sh --deploy --root
-
-# Inside the container:
-python gr00t_wbc/control/main/teleop/run_g1_control_loop.py --interface real
+cp ~/Projects/GR00T-WholeBodyControl/resources/poses/PXL_*.pkl \
+   ~/Projects/robotica/GR00T-WholeBodyControl/resources/poses/
 ```
 
-The `--deploy` flag configures Docker with the network access needed for real hardware (host networking for DDS communication).
+### 3.2 Find your Ethernet interface name
+
+Before starting Docker, identify your Ethernet interface:
+
+```bash
+ip link show
+```
+
+Look for the interface connected to the robot (e.g., `enp39s0`). You will need this name for the `--interface` flag.
+
+### 3.3 Terminal 1 — Start the control loop (hardware mode)
+
+Enable X11 forwarding for Docker, then start the deploy container with the specific interface name and flags:
+
+```bash
+xhost +local:docker
+
+cd ~/Projects/robotica/GR00T-WholeBodyControl && ./docker/run_docker.sh --deploy --root --interface enp39s0 --no-with_hands --no-data_collection --no-enable_upper_body_operation --no-enable_webcam_recording --no-view_camera
+```
+
+> **Note:** Pass the actual Ethernet interface name (e.g., `enp39s0`) instead of `real`. Using `--interface real` may fail with `does not match an available interface` if CycloneDDS cannot auto-detect the correct interface inside Docker.
+
+The deploy script will:
+1. Kill any existing GR00T-WBC containers to prevent DDS conflicts.
+2. Start a Docker container with host networking for DDS communication.
+3. Launch the control loop inside a tmux session.
+4. Display a **safety checklist** — read it carefully, type `Y` to confirm.
 
 The control loop will:
-1. Auto-detect the Ethernet interface with a `192.168.123.*` IP.
-2. Establish DDS communication with the robot over `rt/lowcmd` and `rt/lowstate` topics.
-3. Run hand calibration automatically.
-4. Display a **safety checklist** — read it carefully and confirm before proceeding.
-5. Begin a 2-second startup ramp for smooth joint initialization.
+1. Attempt to release the locomotion controller via `MotionSwitcherClient` (may show `send request error` — this is expected if the robot is already in debug mode via the remote controller).
+2. Skip hand calibration (disabled with `--no-with_hands` to avoid hangs).
+3. Load ONNX balance and walk policies.
+4. Begin the main control loop (timing output only appears when the loop misses its target frequency).
 
-### 3.3 Terminal 2 — Start the motion publisher
+### 3.4 Terminal 2 — Start the motion publisher
 
-Open a new terminal on the host:
+Open a new terminal on the host and attach to the same Docker container:
 
 ```bash
-docker exec -it gr00t_wbc-bash-root /bin/bash
+sudo docker exec -it gr00t_wbc-deploy-root /bin/bash
+```
 
-# Inside the container:
-python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py \
-    --results resources/poses/<video_name>.pkl \
-    --loop \
-    --teleop-frequency 30 \
-    --hand-mode zero \
-    --speed 0.25 \
-    --initial-pose-seconds 10.0 \
-    --upper-body-only
+Inside the container, run the publisher (single line):
+
+```bash
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_214954286.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only
+```
+
+You should see:
+
+```
+[info] loaded results: T=2387, ndof=29, fps=30.0
+[info] motion duration ~ 79.53s @ 30.0fps, speed=0.25x, loop=True
+[info] publishing to ControlPolicy/upper_body_pose @ 30.0 Hz
+[info] sent initial waypoint (upper-body-only). settle 10.00s
 ```
 
 > **Start with `--speed 0.25` or lower.** On real hardware, motions that look fine in sim can generate dangerous torques. Quarter speed is a safe starting point. You can increase gradually once you confirm the robot is stable.
 
-### 3.4 Activate the policy
+### 3.5 Activate the policy
 
-In **Terminal 1** (where the control loop is running):
+Switch to **Terminal 1** (the tmux control pane — use Ctrl+b then arrow keys to navigate between tmux panes). Press keyboard keys in the **terminal**, not any viewer window.
 
 1. Press `]` to activate the balance policy. You should see `Use policy action: True` printed.
 2. Wait for the initial pose settle period (10 seconds). The robot's joints will slowly move to the starting pose.
 3. Observe the robot carefully. The arms should begin replaying the video motion.
 
-### 3.5 Lower the robot (when ready)
+### 3.6 Lower the robot (when ready)
 
 Once the balance policy is active and the robot is holding a stable pose in the harness:
 
@@ -215,6 +246,16 @@ Once the balance policy is active and the robot is holding a stable pose in the 
 3. Gradually transfer weight from the harness to the robot's legs.
 4. If the robot wobbles excessively, raise it back up and reduce `--speed` further.
 5. Once standing stably, you can fully release the harness (but keep it within reach).
+
+### 3.7 Switching to a different video
+
+To replay a different video, stop the publisher in Terminal 2 (Ctrl+C) and start it again with a different `.pkl`:
+
+```bash
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_215356412.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only
+```
+
+The control loop in Terminal 1 does not need to be restarted.
 
 ---
 
@@ -320,10 +361,13 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 
 | Problem | Solution |
 |---------|----------|
-| `--interface real` cannot find Ethernet interface | Verify your workstation has an interface with IP `192.168.123.222`. Run `ip addr` to check. |
+| `--interface real` cannot find Ethernet interface | Use the explicit interface name instead (e.g., `--interface enp39s0`). Run `ip link show` on the host to find it. |
+| `real: does not match an available interface` | Same as above — pass the actual interface name, not `real`. |
 | Joint velocity violation (`sys.exit(1)`) | Reduce `--speed` in the publisher. Check that `upper_body_joint_speed` is 100 (not 1000) in `configs.py`. |
-| Hand calibration hangs | Wait up to 30 seconds. If it does not complete, power cycle the robot's hands (if independently powered) or restart the control loop. |
-| Control loop starts but robot does not move | Press `]` in Terminal 1 to activate the policy. Verify the publisher is running in Terminal 2. |
+| Hand calibration hangs | Use `--no-with_hands` to skip hand calibration. The publisher uses `--hand-mode zero` so hands are not needed. Alternatively, wait up to 30 seconds or power cycle the robot's hands. |
+| `[ClientStub] send request error` / `3102 None` | The `MotionSwitcherClient` cannot reach the robot's service from Docker. Enter debug mode via the physical remote (L2+B then L2+R2) before starting the control loop. |
+| Control loop starts but robot does not move | 1. Verify the robot is in debug/develop mode (L2+B then L2+R2 on the remote). 2. Press `]` in Terminal 1 to activate the policy. 3. Verify the publisher is running in Terminal 2. |
+| Docker image `gr00t_wbc-deploy-root` not found | Tag the cached image: `sudo docker tag gr00t_wbc-deploy-cache-root:latest gr00t_wbc-deploy-root:latest`. Or pull from remote: `./docker/run_docker.sh --install --root`. |
 
 ### General
 
