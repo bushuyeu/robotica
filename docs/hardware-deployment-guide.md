@@ -215,7 +215,7 @@ sudo docker exec -it gr00t_wbc-deploy-root /bin/bash
 Inside the container, run the publisher (single line):
 
 ```bash
-python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_214954286.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_214954286.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0
 ```
 
 You should see:
@@ -252,7 +252,7 @@ Once the balance policy is active and the robot is holding a stable pose in the 
 To replay a different video, stop the publisher in Terminal 2 (Ctrl+C) and start it again with a different `.pkl`:
 
 ```bash
-python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_215356412.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_215356412.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0
 ```
 
 The control loop in Terminal 1 does not need to be restarted.
@@ -333,9 +333,19 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 | Parameter | Recommended Value | Why |
 |-----------|------------------|-----|
 | `--speed` (publisher) | 0.25 (start here) | Quarter speed keeps torques within the balance policy's stability envelope |
-| `upper_body_joint_speed` (configs.py) | 100 rad/s | Default 1000 rad/s is far too aggressive — same fix as sim |
+| `upper_body_joint_speed` (configs.py) | 5.0 rad/s (default) | Must stay below ARM_VELOCITY_LIMIT (6.0 rad/s) to avoid hard shutdown. Tunable per-video via `--upper-body-joint-speed` CLI arg on the control loop |
+| `--smooth` (publisher) | 3.0 (recommended) | Gaussian smoothing of pose data. Removes jitter from noisy PromptHMR tracking. Higher = smoother but less faithful. 0 = disabled |
 
 **Gradually increase speed only after confirming stability** at the current speed. Suggested progression: 0.25 -> 0.35 -> 0.5. Do not exceed 0.5 on first deployment.
+
+### Safety Monitors
+
+| Check | Threshold | Behavior |
+|-------|-----------|----------|
+| Arm joint velocity | 6.0 rad/s (NVIDIA) | Hard exit on real hardware, warning in sim |
+| Hand joint velocity | 50.0 rad/s (NVIDIA) | Hard exit on real hardware, warning in sim |
+| Arm joint position | 95% of URDF range | Hard exit on real hardware (5% margin before mechanical stop) |
+| Self-collision | MuJoCo contact detection | Warning in sim (enable in `base_sim.py`) |
 
 ---
 
@@ -363,7 +373,7 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 |---------|----------|
 | `--interface real` cannot find Ethernet interface | Use the explicit interface name instead (e.g., `--interface enp39s0`). Run `ip link show` on the host to find it. |
 | `real: does not match an available interface` | Same as above — pass the actual interface name, not `real`. |
-| Joint velocity violation (`sys.exit(1)`) | Reduce `--speed` in the publisher. Check that `upper_body_joint_speed` is 100 (not 1000) in `configs.py`. |
+| Joint velocity violation (`sys.exit(1)`) | Reduce `--speed` in the publisher. Default `upper_body_joint_speed` is now 5.0 rad/s (below 6.0 limit). Add `--smooth 3.0` to filter noisy pose data. For per-video tuning, pass `--upper-body-joint-speed 4.0` to the control loop. |
 | Hand calibration hangs | Use `--no-with_hands` to skip hand calibration. The publisher uses `--hand-mode zero` so hands are not needed. Alternatively, wait up to 30 seconds or power cycle the robot's hands. |
 | `[ClientStub] send request error` / `3102 None` | The `MotionSwitcherClient` cannot reach the robot's service from Docker. Enter debug mode via the physical remote (L2+B then L2+R2) before starting the control loop. |
 | Control loop starts but robot does not move | 1. Verify the robot is in debug/develop mode (L2+B then L2+R2 on the remote). 2. Press `]` in Terminal 1 to activate the policy. 3. Verify the publisher is running in Terminal 2. |
@@ -407,7 +417,9 @@ NETWORK
   SSH:         unitree@192.168.123.164 (pw: 123)
 
 VELOCITY LIMITS
-  Arm joints:  6.0 rad/s
-  Hand joints: 50.0 rad/s
-  Recommended --speed: 0.25
+  Arm joints:  6.0 rad/s (hard kill on real hardware)
+  Hand joints: 50.0 rad/s (hard kill on real hardware)
+  Position:    95% of URDF range (hard kill on real hardware)
+  upper_body_joint_speed: 5.0 rad/s (InterpolationPolicy cap)
+  Recommended --speed: 0.25, --smooth 3.0
 ```
