@@ -3,6 +3,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Google Drive shared video folder ID
 DRIVE_FOLDER_ID := "11I9UZfqr_JanmgzVx3qM0zNF3YzqaEuW"
+# Google Doc ID for the shared quick-ref document
+QUICKREF_DOC_ID := "1nB0O2PMIJ1lYWeAb37TYOTPj7q0LIIlm7W_WJAsrYX8"
 # Standalone GR00T repo mounted by Docker (override via .env or env var)
 GROOT_STANDALONE := env_var_or_default("GROOT_STANDALONE", env("HOME") / "Projects/GR00T-WholeBodyControl")
 
@@ -496,6 +498,16 @@ auto-pipeline-monitored robot="unitree_g1" wandb_project="robotica":
     .venv/bin/python -m robotica.pipeline_monitor \
         --robot {{robot}} --wandb-project {{wandb_project}} \
         --drive-sync --hf-upload
+
+# Download latest version of the shared quick-ref Google Doc into notes/
+sync-notes:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; NC='\033[0m'
+    mkdir -p notes
+    curl -sL "https://docs.google.com/document/d/{{QUICKREF_DOC_ID}}/export?format=txt" \
+        -o notes/g1-quick-ref-and-links.txt
+    echo -e "${GREEN}[DONE]${NC} notes/g1-quick-ref-and-links.txt updated ($(wc -l < notes/g1-quick-ref-and-links.txt) lines)"
 
 # Delete all results (with confirmation)
 clean:
