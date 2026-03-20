@@ -12,9 +12,9 @@
 
 * **Manuals:** [User Manual](https://marketing.unitree.com/article/en/G1/User_Manual.html) | [Developer Support](https://support.unitree.com/home/en/G1_developer)  
 * **SDK Quick Start:** [Unitree SDK2 Guide](https://support.unitree.com/home/en/G1_developer/quick_development)  
-* **Hands:** [Standard Prosthetic](https://www.google.com/search?q=https://support.unitree.com/home/en/G1_developer/End_Prosthetic_Hand) | [Inspire Dexterous Hand](https://www.google.com/search?q=https://support.unitree.com/home/en/G1_developer/Flagship_Version_C_End_INSPIRE_Dexterous_Hand)  
-* **Data:** [G1 Open Source Datase](https://www.google.com/search?q=https://github.com/unitreerobotics/unitree_g1_dataset)t  
-* **Wait Hardware:** [https://support.unitree.com/home/en/G1\_developer/waist\_fastener](https://support.unitree.com/home/en/G1_developer/waist_fastener)  
+* **Hands:** [Standard Prosthetic](https://support.unitree.com/home/en/G1_developer/End_Prosthetic_Hand) | [Inspire Dexterous Hand](https://support.unitree.com/home/en/G1_developer/Flagship_Version_C_End_INSPIRE_Dexterous_Hand)  
+* **Data:** [G1 Open Source Dataset](https://github.com/unitreerobotics/unitree_g1_dataset)
+* **Waist Hardware:** [https://support.unitree.com/home/en/G1\_developer/waist\_fastener](https://support.unitree.com/home/en/G1_developer/waist_fastener)  
 * Open Source Datasets: [https://www.unitree.com/opensource](https://www.unitree.com/opensource)  
 * [https://github.com/unitreerobotics](https://github.com/unitreerobotics)  
 * 
@@ -23,7 +23,7 @@
 
 * **Walking on All 4s:** [G1 Crawl Repo](https://github.com/jloganolson/g1_crawl) (Includes 3D printed head/arm parts).  
 * **Skills:** [G1 Spin-Kick Example (MuJoCo)](https://github.com/mujocolab/g1_spinkick_example) | [Kung-Fu Workflow](https://kungfu-bot.github.io/)  
-* **VLA Models:** [NaVILA Vision-Language-Action for G1](https://www.google.com/search?q=https://github.com/unitreerobotics/NaVILA)
+* **VLA Models:** [NaVILA Vision-Language-Action for G1](https://github.com/unitreerobotics/NaVILA)
 
 [https://gmargo11.github.io/softmimic/](https://gmargo11.github.io/softmimic/) [https://www.instagram.com/p/DQsFiHlESNf/](https://www.instagram.com/p/DQsFiHlESNf/)
 
@@ -34,15 +34,15 @@ MIT \- A way of doing soft movement so the bot doesn't hit or break anything.
 ## **🐕 Unitree Go2 (Quadruped)**
 
 * **Manuals:** [User Manual](https://marketing.unitree.com/article/en/Go2/User_Manual.html) | [Developer Support](https://support.unitree.com/home/en/developer)  
-* **Hardware Deep Dive:** [Go2 Teardown Video](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3Dyour_video_link)  
-* **Setup:** [Unboxing & Connection Video](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3Dyour_video_link)
+* **Hardware Deep Dive:** [Go2 Teardown Video](https://www.youtube.com/watch?v=your_video_link)
+* **Setup:** [Unboxing & Connection Video](https://www.youtube.com/watch?v=your_video_link)
 
 ---
 
 ## **🏗️ Isaac Sim & Simulation**
 
 * **Introduction:** [Isaac Lab Welcome](https://isaac-sim.github.io/IsaacLab/)  
-* **Tutorials:** [Legged Robotics RL Series](https://www.google.com/search?q=https://www.youtube.com/playlist%3Flist%3DPL4OW_H79Z91uS891q6I35P0uW0A1iU6gU) | [Deploying Policies](https://github.com/isaac-sim/IsaacLab)  
+* **Tutorials:** [Legged Robotics RL Series](https://www.youtube.com/playlist?list=PL4OW_H79Z91uS891q6I35P0uW0A1iU6gU) | [Deploying Policies](https://github.com/isaac-sim/IsaacLab)  
 * **Community:** [Isaac Lab Basics Discord](https://discord.com/invite/CqV7NFHGb5)
 
 ---
@@ -104,7 +104,7 @@ G1 SDK: [https://support.unitree.com/home/en/G1\_developer](https://support.unit
 Video on setup: [Unitree G1 Basic Unboxing | How to Power On, Connect to Controller/Phone & Start Controlling](https://www.youtube.com/watch?v=1OpngwB6gWM&list=WL&index=10)  
 Setup and Calibration: [How to Calibrate G1 Humanoid Robot from Unitree](https://www.youtube.com/watch?v=V-Zaovo5pB4)
 
-G1 fake hand documentaoin: [G1- End Prosthetic Hand](https://www.unitree.com/images/G1-End%20Prosthetic%20Hand%20Disassembly%20and%20Assembly%20Guide%20Manual.pdf)
+G1 fake hand documentation: [G1- End Prosthetic Hand](https://www.unitree.com/images/G1-End%20Prosthetic%20Hand%20Disassembly%20and%20Assembly%20Guide%20Manual.pdf)
 
 G1 fancy hand [G1- Flagship Version C End INSPIRE Dexterous Hand](https://www.unitree.com/images/G1-Flagship%20Version%20C%20End%20Dexterous%20Hand%20Disassembly%20and%20Assembly%20Guide%20Manual.pdf)
 
@@ -226,9 +226,11 @@ In the event of a disagreement or conflict regarding research goals, hardware us
 
 # **unitree\_rl Setup environment**
 
-\# prerequisites on Ubuntu  
-sudo apt-get update  
-sudo apt-get install \-y build-essential
+\# prerequisites on Ubuntu
+sudo apt-get update
+sudo apt-get install \-y build-essential net-tools
+\# net-tools provides `ifconfig`, required by CycloneDDS to detect the network interface.
+\# Without it, the control loop starts but the robot will not move.
 
 \# Install unitree rl  
 \# https://github.com/YosubShin/unitree\_rl\_gym/blob/main/doc/setup\_en.md  
@@ -238,7 +240,7 @@ sudo apt-get install \-y build-essential
 cd \~/unitree\_rl\_gym/legged\_gym  
 python scripts/play.py \--task=g1 \--run=flat
 
-\# First initiate the training so it creates necessary folder structure as well as initial weights (moel\_0.pt)  
+\# First initiate the training so it creates necessary folder structure as well as initial weights (model\_0.pt)  
 python scripts/train.py \--task=g1  
 \# This should open up the simulator and start training.
 
@@ -324,7 +326,7 @@ We will use **Isaac Lab** (built on NVIDIA Omniverse) and Unitree's RL wrapper.
 Bash  
 git clone https://github.com/unitreerobotics/unitree\_rl\_gym  
 cd unitree\_rl\_gym  
-pip install \-e .
+uv pip install \-e .
 
 ### **Step 2: "Hello World" \- Running a Pre-trained Policy**
 
@@ -377,29 +379,54 @@ When finished, the script saves a .pt file (e.g., model\_2000.pt) in the logs/ d
 
 ### **1\. The Physical Safety Rig**
 
-* **Rule \#1:** The robot must be **suspended** (hung from a ceiling tether or gantry) for all initial tests.  
+* **Rule \#1:** The robot must be **suspended** (hung from a ceiling tether or gantry) for all initial tests.
 * **Rule \#2:** Keep the robot's feet 5cm off the ground during the first boot.
+* **Rule \#3:** Always operate with **two people** — one at the workstation (keyboard e-stop) and one holding the remote controller (L2+B / L2+Y ready).
+
+### **Emergency Stop Procedures**
+
+| Method | How | Effect |
+| :---- | :---- | :---- |
+| **L2 \+ B** (Primary) | Remote controller | **Damping mode** — joints resist movement, robot holds position. Use this first. |
+| **L2 \+ Y** (Secondary) | Remote controller | **Zero torque** — all motors release, robot collapses. Use if damping is not enough. |
+| **Backtick (`)** | Keyboard in terminal | Kills the tmux control session, stopping all SDK commands. |
+
+**⚠ Memorize these before powering on the robot. The safety observer must have the remote controller with fingers on L2+B at all times.**
 
 ### **2\. Connection Workflow**
 
 1. **Ethernet:** Connect laptop to the robot's Ethernet port.  
-2. **IP Settings:** Set your Laptop IP to 192.168.123.99.  
-3. **SSH into Robot:**  
-   Bash  
-   ssh unitree@192.168.123.161  
+2. **IP Settings:** Set your Laptop IP to `192.168.123.222/24`.
+3. **SSH into Robot:**
+   Bash
+   ssh unitree@192.168.123.164
    \# Password: 123
 
 ### **3\. Killing the Default "Brain"**
 
 The robot comes with a default OS that makes it walk. We must *silence* this to let our custom RL policy take over.
 
-1. **On the Remote Controller:**  
-   * Press L2 \+ R2 (Trigger combo). This typically puts the robot into **Debug Mode** (motors active, but listening for custom commands).  
-   * *Verify:* The robot should go limp or hold position loosely, not trying to balance itself actively.
+1. **On the Remote Controller:**
+   * First press **L2 \+ B** to enter **Damping Mode** (joints offer gentle resistance, robot does NOT go limp).
+   * Then press **L2 \+ R2** to enter **Debug Mode** (releases the built-in locomotion controller, motors now listen for custom SDK commands).
+   * *Verify:* The robot should hold position loosely — joints resist movement but the robot is not actively balancing.
+   * **⚠ Do NOT use L2 \+ Y (Zero Torque) unless you intend the robot to collapse — that is an emergency stop, not a mode transition.**
 
 ## ---
 
 **Phase 4: Sim2Real Deployment**
+
+### **Joint Safety Limits (Critical for Real Hardware)**
+
+The JointSafetyMonitor enforces hard velocity limits. **Exceeding these triggers an immediate `sys.exit(1)` on real hardware.**
+
+| Joint Group | Max Velocity | Notes |
+| :---- | :---- | :---- |
+| Arm joints | 6.0 rad/s | |
+| Hand joints | 50.0 rad/s | |
+
+* Set `upper_body_joint_speed` to **100** rad/s (the default 1000 is unsafe for real hardware).
+* Start the publisher with `--speed 0.25` and increase gradually.
 
 ### **Step 1: Transfer the Brain**
 
@@ -408,7 +435,7 @@ Move the .pt file from your laptop to the robot.
 Bash
 
 \# Run this on your laptop  
-scp logs/g1\_walk/model\_2000.pt unitree@192.168.123.161:\~/unitree\_rl\_gym/deploy/
+scp logs/g1\_walk/model\_2000.pt unitree@192.168.123.164:\~/unitree\_rl\_gym/deploy/
 
 ### **Step 2: The Inference Script**
 
@@ -423,10 +450,11 @@ python deploy\_real.py \--model model\_2000.pt
 
 1. **Robot Suspended:** Yes.  
 2. **Script Running:** Yes.  
-3. **Gently Touch Down:** Slowly lower the tether until feet touch the floor.  
-4. **Observation:**  
-   * *Success:* The robot detects contact and starts stepping to maintain balance.  
-   * *Failure:* The robot shakes violently (High-Frequency Oscillation). **Action:** Lift immediately and kill script (Ctrl+C).
+3. **Gently Touch Down:** Slowly lower the tether until feet touch the floor.
+   * **For GR00T-WBC workflow:** Before lowering, activate the balance policy (`]` key in terminal) and release the elastic band (`9` key). The robot will NOT balance automatically without these steps.
+4. **Observation:**
+   * *Success:* The robot detects contact and starts stepping to maintain balance.
+   * *Failure:* The robot shakes violently (High-Frequency Oscillation). **Action:** Lift immediately and kill script (Ctrl+C or backtick for tmux e-stop).
 
 ## ---
 
@@ -447,7 +475,7 @@ python deploy\_real.py \--model model\_2000.pt
 ### **Video Resources for Class**
 
 * **Sim2Real Explained (Concept):** [OpenAI "Learning Dexterity" (YouTube)](https://www.youtube.com/watch?v=jwSbzNHGflM) \- *Best visual explanation of Domain Randomization.*  
-* **Unitree G1 Teaser:** [Official G1 Video](https://www.google.com/search?q=https://www.youtube.com/watch?v%3DzGFq69N7tQM) \- *To get students hyped.*
+* **Unitree G1 Teaser:** [Official G1 Video](https://www.youtube.com/watch?v=zGFq69N7tQM) \- *To get students hyped.*
 
 ## ---
 
@@ -460,7 +488,7 @@ python deploy\_real.py \--model model\_2000.pt
 | **1\. Safety** | Check Gantry/Tether | Robot is secured and hanging freely. |
 | **2\. Battery** | Check Voltage | Battery \> 20% charge. |
 | **3\. Mode** | **Damping Mode** | Robot joints offer resistance but do not move on their own. |
-| **4\. Network** | Ping Robot | ping 192.168.123.161 returns success. |
+| **4\. Network** | Ping Robot | ping 192.168.123.164 returns success. |
 | **5\. Controller** | **Kill Default High-Level** | Press L2+R2 (or firmware specific combo) \-\> Robot enters Debug/Low-Level. |
 | **6\. Deploy** | Run Python Script | Terminal shows "Waiting for control loop..." |
 | **7\. Action** | **Start** | Press Start on script/Controller. Legs begin to move. |
@@ -477,8 +505,8 @@ Here is the step-by-step workflow to get your policy controlling the G1.
 First, establish a robust, low-latency connection between your laptop and the robot.
 
 * **Ethernet Connection:** Connect your laptop directly to the robot's Ethernet port.  
-* **IP Configuration:** The G1 usually has a default static IP (often `192.168.123.xx` range). You must set your laptop's Ethernet adapter to a static IP in the same subnet (e.g., `192.168.123.15`) to communicate.  
-* **Verify Connection:** Use `ping 192.168.123.10` (or the specific IP of the robot's motion control unit) to ensure you have a connection with low latency (ideally \<1ms for stable control).
+* **IP Configuration:** The G1's onboard computer (Orin NX) is at `192.168.123.164`. Set your laptop's Ethernet adapter to a static IP of `192.168.123.222/24`.
+* **Verify Connection:** Use `ping 192.168.123.164` to ensure you have a connection with low latency (ideally \<1ms for stable control).
 
 ### **2\. Install the Unitree SDK (unitree\_sdk2)**
 
@@ -1144,7 +1172,7 @@ cd IsaacLab && ./isaaclab.sh --install
 
 ```
 git clone [https://github.com/unitreerobotics/unitree_sdk2_python](https://github.com/unitreerobotics/unitree_sdk2_python)
-cd unitree_sdk2_python && pip install -e .
+cd unitree_sdk2_python && uv pip install -e .
 ```
 
 ### **2.3 The "Stuttering" Fix (Crucial Lesson Learned)**
@@ -1185,7 +1213,7 @@ Monitor progress via **Weights & Biases**. Look for the "Mean Reward" curve to p
 
 1. **Gantry Mandate:** The G1 **must** be suspended from the ceiling tether.  
 2. **Mode Check:** Set robot to "Damping Mode" (L2 \+ B combo).  
-3. **SSH Connection:** `ssh unitree@192.168.123.161` (Password: `123`).  
+3. **SSH Connection:** `ssh unitree@192.168.123.164` (Password: `123`).  
 4. **Touchdown:** Slowly lower the tether until the feet accept the weight.
 
 ## **Part 4: Capstone Project 2 — Video2Robot (Performing Arts)**
@@ -1222,12 +1250,14 @@ ML students develop a "Flight-Phase" policy.
 
 ## **Part 6: Bonus Capabilities (Untethered Operation)**
 
-### **6.1 WiFi Configuration**
+### **6.1 WiFi Configuration (Experimental / Future)**
+
+**⚠ All verified deployments use wired Ethernet.** WiFi introduces latency and jitter that can destabilize low-level control loops. This section is aspirational — do not attempt untethered WiFi operation until wired deployment is fully validated.
 
 To run without Ethernet:
 
-1. Connect the robot to a high-speed router.  
-2. Assign a static IP to the robot on the router level.  
+1. Connect the robot to a high-speed router.
+2. Assign a static IP to the robot on the router level.
 3. Configure the `unitree_sdk2` to use the wireless SSID for DDS communication.
 
 ### **6.2 Remote Triggers**
@@ -1309,7 +1339,7 @@ xhost \+local:docker
 cd \~/Documents/unitree/unitree\_sim\_isaaclab  
 sudo docker run \--runtime=nvidia \--gpus all \-it \--rm \\  
  \--network host \\  
- \-e DISPLAY=$DISPLAY \\  
+ \-e DISPLAY=$DISPLAY \\ \# NOTE: This workstation uses DISPLAY=:2, not :0. Verify with `echo $DISPLAY`.  
  \-e NVIDIA\_VISIBLE\_DEVICES=all \\  
  \-e NVIDIA\_DRIVER\_CAPABILITIES=all \\  
  \-v /tmp/.X11-unix:/tmp/.X11-unix:rw \\  
