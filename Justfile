@@ -86,14 +86,14 @@ phmr-run video:
     ABS_VIDEO="$(realpath "$VIDEO")"
     NAME="$(basename "${VIDEO%.*}")"
 
-    # Check if results already exist
-    if [ -f "$PHMR_DIR/results/$NAME/results.pkl" ]; then
-        echo "[SKIP] Results already exist: $PHMR_DIR/results/$NAME/results.pkl"
-        # Copy to shared results dir
-        mkdir -p "$RESULTS_DIR/$NAME"
-        cp -u "$PHMR_DIR/results/$NAME/results.pkl" "$RESULTS_DIR/$NAME/phmr_results.pkl"
+    # Check if results already exist and are complete
+    if [ -f "$RESULTS_DIR/$NAME/phmr_results.pkl.done" ]; then
+        echo "[SKIP] Results already exist: $RESULTS_DIR/$NAME/phmr_results.pkl"
         exit 0
     fi
+
+    # Clean up partial results from previous failed runs
+    rm -f "$PHMR_DIR/results/$NAME/results.pkl" "$RESULTS_DIR/$NAME/phmr_results.pkl"
 
     echo "[RUN] PromptHMR → $NAME"
     (
@@ -106,6 +106,11 @@ phmr-run video:
     # Copy results to shared dir
     mkdir -p "$RESULTS_DIR/$NAME"
     cp "$PHMR_DIR/results/$NAME/results.pkl" "$RESULTS_DIR/$NAME/phmr_results.pkl"
+
+    # Validate before marking complete (blocks .done on bad data)
+    .venv/bin/python -m robotica.validate phmr "$RESULTS_DIR/$NAME/phmr_results.pkl"
+
+    touch "$RESULTS_DIR/$NAME/phmr_results.pkl.done"
     echo "[DONE] Results → $RESULTS_DIR/$NAME/phmr_results.pkl"
 
 # Batch-run PromptHMR on all videos
@@ -131,25 +136,30 @@ gmr-retarget video robot="unitree_g1":
     ROBOT="{{robot}}"
     NAME="$(basename "${VIDEO%.*}")"
 
-    PHMR_RESULTS="$PHMR_DIR/results/$NAME/results.pkl"
-    if [ ! -f "$PHMR_RESULTS" ]; then
-        # Try shared results dir
-        PHMR_RESULTS="$RESULTS_DIR/$NAME/phmr_results.pkl"
+    OUT_DIR="$(cd . && pwd)/$RESULTS_DIR/$NAME"
+    OUT_FILE="$OUT_DIR/retarget_${ROBOT}.pkl"
+
+    # Check if results already exist and are complete
+    if [ -f "$OUT_FILE.done" ]; then
+        echo "[SKIP] Retarget results already exist: $OUT_FILE"
+        exit 0
+    fi
+
+    # Require completed PromptHMR results (not partial)
+    PHMR_RESULTS="$RESULTS_DIR/$NAME/phmr_results.pkl"
+    if [ ! -f "$PHMR_RESULTS.done" ]; then
+        # Fall back to PromptHMR-local dir (for manually produced results)
+        PHMR_RESULTS="$PHMR_DIR/results/$NAME/results.pkl"
     fi
     if [ ! -f "$PHMR_RESULTS" ]; then
         echo "[ERROR] No PromptHMR results for $NAME. Run: just phmr-run $VIDEO"
         exit 1
     fi
 
+    # Clean up partial retarget results from previous failed runs
+    rm -f "$OUT_FILE"
+
     ABS_RESULTS="$(realpath "$PHMR_RESULTS")"
-    OUT_DIR="$(cd . && pwd)/$RESULTS_DIR/$NAME"
-    OUT_FILE="$OUT_DIR/retarget_${ROBOT}.pkl"
-
-    if [ -f "$OUT_FILE" ]; then
-        echo "[SKIP] Retarget results already exist: $OUT_FILE"
-        exit 0
-    fi
-
     echo "[RUN] GMR retarget → $NAME ($ROBOT)"
     mkdir -p "$OUT_DIR"
     (
@@ -159,6 +169,11 @@ gmr-retarget video robot="unitree_g1":
             --robot "$ROBOT" \
             --save_path "$OUT_FILE"
     )
+
+    # Validate before marking complete (blocks .done on bad data)
+    .venv/bin/python -m robotica.validate retarget "$OUT_FILE"
+
+    touch "$OUT_FILE.done"
     echo "[DONE] Retarget → $OUT_FILE"
 
 # Batch retarget all processed videos
@@ -374,8 +389,8 @@ groot-copy video:
     SRC="$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl"
     DST="{{GROOT_STANDALONE}}/resources/poses/$NAME.pkl"
 
-    if [ ! -f "$SRC" ]; then
-        echo -e "${RED}[ERROR]${NC} No retarget results: $SRC"
+    if [ ! -f "$SRC.done" ]; then
+        echo -e "${RED}[ERROR]${NC} No completed retarget results: $SRC"
         echo "  Run first: just pipeline {{video}}"
         exit 1
     fi
@@ -396,18 +411,23 @@ groot-copy-all:
     GREEN='\033[0;32m'; NC='\033[0m'
     shopt -s nullglob
 
-    PKLS=("$RESULTS_DIR"/*/retarget_unitree_g1.pkl)
+    PKLS=("$RESULTS_DIR"/*/retarget_unitree_g1.pkl.done)
     if [ ${#PKLS[@]} -eq 0 ]; then
-        echo "No retarget results found in $RESULTS_DIR"
+        echo "No completed retarget results found in $RESULTS_DIR"
         exit 0
     fi
 
     COPIED=0
     SKIPPED=0
-    for pkl in "${PKLS[@]}"; do
+    INCOMPLETE=0
+    for done_file in "${PKLS[@]}"; do
+        pkl="${done_file%.done}"
         NAME="$(basename "$(dirname "$pkl")")"
         DST="{{GROOT_STANDALONE}}/resources/poses/$NAME.pkl"
-        if [ -f "$DST" ]; then
+        if [ ! -f "$pkl" ]; then
+            echo "[WARN] .done marker without .pkl: $pkl"
+            INCOMPLETE=$((INCOMPLETE + 1))
+        elif [ -f "$DST" ]; then
             SKIPPED=$((SKIPPED + 1))
         else
             mkdir -p "$(dirname "$DST")"
@@ -418,7 +438,7 @@ groot-copy-all:
     done
 
     echo ""
-    echo "Copied $COPIED, skipped $SKIPPED (already existed)"
+    echo "Copied $COPIED, skipped $SKIPPED (already existed)${INCOMPLETE:+, $INCOMPLETE warnings}"
 
 # Full auto-pipeline: drive-sync → pipeline-batch → groot-copy-all
 auto-pipeline robot="unitree_g1":

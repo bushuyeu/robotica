@@ -327,7 +327,7 @@ In **Terminal 1** (the terminal running the control loop, NOT the viewer window)
 - Some leg tremor on bent knees is normal and expected.
 
 **How to verify it is working correctly:**
-- The robot should NOT fall over when the elastic band is released (if it does, check that `upper_body_joint_speed` is 100, not 1000, in `configs.py`).
+- The robot should NOT fall over when the elastic band is released (if it does, check that `upper_body_joint_speed` is 5.0, not 1000, in `configs.py`).
 - The arm motions should visually correspond to the original video input.
 - The simulation should run continuously without NaN warnings or freezes.
 
@@ -352,7 +352,7 @@ In **Terminal 1** (the terminal running the control loop, NOT the viewer window)
 ### Known issues
 
 - **Robot hangs in air:** The elastic band is enabled by default. Press `9` in the terminal (not viewer) to release it. Wait for the initial pose to settle first.
-- **Robot falls when band released:** Ensure `upper_body_joint_speed` is set to 100 (not 1000) in `configs.py`. Use `--speed 0.25` for the publisher. The default 1000 rad/s moves arms too fast for the balance policy to compensate.
+- **Robot falls when band released:** Ensure `upper_body_joint_speed` is set to 5.0 (not 1000) in `configs.py`. Use `--speed 0.25` for the publisher. The value must stay below the 6.0 rad/s arm velocity safety limit.
 - **Simulation instability (NaN warnings):** Reduce motion speed (`--speed 0.1`) or restart the control loop.
 - **`--sim-sync-mode` crashes:** Known issue. Use default async mode.
 - **Segfault on viewer close:** Normal — closing the MuJoCo window causes this. Just restart the control loop.

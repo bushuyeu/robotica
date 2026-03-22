@@ -204,6 +204,8 @@ The control loop will:
 3. Load ONNX balance and walk policies.
 4. Begin the main control loop (timing output only appears when the loop misses its target frequency).
 
+> **Note:** The robot's arms will move to a default pose as soon as the control loop starts — this is the startup ramp and is expected. The `]` key activates the **balance policy** (legs), not the arm control.
+
 ### 3.4 Terminal 2 — Start the motion publisher
 
 Open a new terminal on the host and attach to the same Docker container:
@@ -374,6 +376,7 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 | `--interface real` cannot find Ethernet interface | Use the explicit interface name instead (e.g., `--interface enp39s0`). Run `ip link show` on the host to find it. |
 | `real: does not match an available interface` | Same as above — pass the actual interface name, not `real`. |
 | Joint velocity violation (`sys.exit(1)`) | Reduce `--speed` in the publisher. Default `upper_body_joint_speed` is now 5.0 rad/s (below 6.0 limit). Add `--smooth 3.0` to filter noisy pose data. For per-video tuning, pass `--upper-body-joint-speed 4.0` to the control loop. |
+| Shoulder roll position safety violation on startup | The robot's arms naturally rest at ~0 rad shoulder roll after entering debug mode, but the URDF lower bound is 0.19 rad. Combined with the 5% critical margin, the safety monitor triggers immediately. **Fix:** Widen the shoulder roll bounds in `gr00t_wbc/control/robot_model/supplemental_info/g1/g1_supplemental_info.py`: change `left_shoulder_roll_joint` lower bound from `0.19` to `-0.5` and `right_shoulder_roll_joint` upper bound from `-0.19` to `0.5`. This allows the natural rest position while still catching arms crossing the body. |
 | Hand calibration hangs | Use `--no-with_hands` to skip hand calibration. The publisher uses `--hand-mode zero` so hands are not needed. Alternatively, wait up to 30 seconds or power cycle the robot's hands. |
 | `[ClientStub] send request error` / `3102 None` | The `MotionSwitcherClient` cannot reach the robot's service from Docker. Enter debug mode via the physical remote (L2+B then L2+R2) before starting the control loop. |
 | Control loop starts but robot does not move | 1. Verify the robot is in debug/develop mode (L2+B then L2+R2 on the remote). 2. Press `]` in Terminal 1 to activate the policy. 3. Verify the publisher is running in Terminal 2. |
@@ -405,7 +408,7 @@ STARTUP SEQUENCE
   3. Wait ~1 minute
   4. L2 + B (damping mode)
   5. L2 + R2 (debug mode)
-  6. Start control loop: --interface real
+  6. Start control loop: --interface enp39s0
   7. Start publisher: --speed 0.25
   8. Press ] to activate policy
   9. Wait 10 seconds for initial pose
