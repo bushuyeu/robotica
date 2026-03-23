@@ -217,17 +217,21 @@ sudo docker exec -it gr00t_wbc-deploy-root /bin/bash
 Inside the container, run the publisher (single line):
 
 ```bash
-python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_214954286.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_214954286.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0 --two-pass
 ```
 
 You should see:
 
 ```
-[info] loaded results: T=2387, ndof=29, fps=30.0
-[info] motion duration ~ 79.53s @ 30.0fps, speed=0.25x, loop=True
-[info] publishing to ControlPolicy/upper_body_pose @ 30.0 Hz
-[info] sent initial waypoint (upper-body-only). settle 10.00s
+[info] applied Gaussian smoothing (sigma=3.0 frames)
+[info] clamped N out-of-range joint values to 95% of URDF limits
+==================================================
+[PASS 1] Playing trajectory once — sim is recording collisions...
+[PASS 1] Press ] in Terminal 1 to activate, wait 5s, press 9
+==================================================
 ```
+
+After pass 1 completes, the publisher automatically reads the collision log, fixes those frames, and starts pass 2 (looping). You do NOT need to restart or re-activate — the control loop stays running.
 
 > **Start with `--speed 0.25` or lower.** On real hardware, motions that look fine in sim can generate dangerous torques. Quarter speed is a safe starting point. You can increase gradually once you confirm the robot is stable.
 
@@ -254,7 +258,7 @@ Once the balance policy is active and the robot is holding a stable pose in the 
 To replay a different video, stop the publisher in Terminal 2 (Ctrl+C) and start it again with a different `.pkl`:
 
 ```bash
-python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_215356412.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0
+python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py --results resources/poses/PXL_20260114_215356412.pkl --loop --teleop-frequency 30 --hand-mode zero --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only --smooth 3.0 --two-pass
 ```
 
 The control loop in Terminal 1 does not need to be restarted.
@@ -337,6 +341,8 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 | `--speed` (publisher) | 0.25 (start here) | Quarter speed keeps torques within the balance policy's stability envelope |
 | `upper_body_joint_speed` (configs.py) | 5.0 rad/s (default) | Must stay below ARM_VELOCITY_LIMIT (6.0 rad/s) to avoid hard shutdown. Tunable per-video via `--upper-body-joint-speed` CLI arg on the control loop |
 | `--smooth` (publisher) | 3.0 (recommended) | Gaussian smoothing of pose data. Removes jitter from noisy PromptHMR tracking. Higher = smoother but less faithful. 0 = disabled |
+| `--two-pass` (publisher) | Recommended for hardware | Two-pass collision removal. Pass 1 plays the trajectory once while the sim logs all self-collisions. Pass 2 fixes those frames by interpolating through them smoothly, then loops. Catches collisions caused by the balance policy's leg motion that static checks miss |
+| `--collision-free` (publisher) | Alternative to --two-pass | Static MuJoCo collision check on all frames before playback. Faster but less accurate — doesn't account for balance policy leg motion. Use `--two-pass` when possible |
 
 **Gradually increase speed only after confirming stability** at the current speed. Suggested progression: 0.25 -> 0.35 -> 0.5. Do not exceed 0.5 on first deployment.
 
@@ -347,7 +353,8 @@ The balance policy (ONNX checkpoint shipped with GR00T-WBC) was trained in simul
 | Arm joint velocity | 6.0 rad/s (NVIDIA) | Hard exit on real hardware, warning in sim |
 | Hand joint velocity | 50.0 rad/s (NVIDIA) | Hard exit on real hardware, warning in sim |
 | Arm joint position | 95% of URDF range | Hard exit on real hardware (5% margin before mechanical stop) |
-| Self-collision | MuJoCo contact detection | Warning in sim (enable in `base_sim.py`) |
+| Shoulder roll position | ±0.75 rad (self-collision-safe) | Publisher clamps via `SELF_COLLISION_SAFE_LIMITS` — prevents arm-torso contact |
+| Self-collision | MuJoCo mesh collision geoms | Warning in sim (logged to `/tmp/gr00t_collision_log.jsonl`). Use `--two-pass` to auto-fix |
 
 ---
 
@@ -423,6 +430,7 @@ VELOCITY LIMITS
   Arm joints:  6.0 rad/s (hard kill on real hardware)
   Hand joints: 50.0 rad/s (hard kill on real hardware)
   Position:    95% of URDF range (hard kill on real hardware)
+  Shoulder roll: ±0.75 rad (self-collision-safe clamp)
   upper_body_joint_speed: 5.0 rad/s (InterpolationPolicy cap)
-  Recommended --speed: 0.25, --smooth 3.0
+  Recommended: --speed 0.25 --smooth 3.0 --two-pass
 ```
