@@ -1,35 +1,31 @@
-// Color scheme matching bushuyeu.com exactly
-// Source: Vercel Next.js portfolio — dark mode Tailwind classes confirmed from HTML
-//   html: dark:bg-black dark:text-white
-//   nav/footer links: dark:text-neutral-300 (#d4d4d4), hover: dark:text-neutral-200 (#e5e5e5)
-//   content links: text-blue-400 (#60a5fa) underline
-//   font: Geist (Vercel) via woff2, system-font fallbacks
+// Light scheme matching bushuyeu.com — bg-white, text-black, blue-400 links
+// Applied by default; overridden by bushuyeu-dark when OS prefers dark.
 
-$color-scheme: dark;
+$color-scheme: light;
 
-// Backgrounds — pure black matching dark:bg-black
-$body-background-color: #000000;
-$sidebar-color: #050505;
-$search-background-color: #0d0d0d;
-$code-background-color: #0d0d0d;
-$table-background-color: #000000;
-$feedback-color: #050505;
+// Backgrounds
+$body-background-color: #ffffff;
+$sidebar-color: #f8f8f8;
+$search-background-color: #ffffff;
+$code-background-color: #f5f5f5;
+$table-background-color: #ffffff;
+$feedback-color: #f0f0f0;
 
-// Text — dark:text-white (#ffffff), secondary dark:text-neutral-300 (#d4d4d4)
-$body-text-color: #ffffff;
-$body-heading-color: #ffffff;
-$nav-child-link-color: #d4d4d4;
-$search-result-preview-color: #d4d4d4;
+// Text — text-black / neutral-600 for secondary
+$body-text-color: #111111;
+$body-heading-color: #000000;
+$nav-child-link-color: #52525b;       // neutral-600 from bushuyeu.com nav
+$search-result-preview-color: #52525b;
 
-// Links — text-blue-400 (#60a5fa) confirmed from bushuyeu.com
+// Links — text-blue-400 (#60a5fa) confirmed from bushuyeu.com source
 $link-color: #60a5fa;
 $btn-primary-color: #60a5fa;
-$base-button-color: #0d0d0d;
+$base-button-color: #f0f0f0;
 
-// Borders — subtle, dark
-$border-color: #1f1f1f;
+// Borders
+$border-color: #e5e5e5;               // neutral-200
 
-// Typography — Geist (bushuyeu.com's font) with system fallbacks
+// Typography — Geist (bushuyeu.com's font) + system fallbacks
 $body-font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
   Roboto, Helvetica, Arial, sans-serif;
 $mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,

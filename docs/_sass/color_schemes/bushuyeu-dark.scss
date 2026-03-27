@@ -1,0 +1,34 @@
+// Dark scheme matching bushuyeu.com — dark:bg-black, dark:text-white, blue-400 links
+// Loaded conditionally via media="(prefers-color-scheme: dark)" in head_custom.html.
+
+$color-scheme: dark;
+
+// Backgrounds — pure black matching dark:bg-black
+$body-background-color: #000000;
+$sidebar-color: #050505;
+$search-background-color: #0d0d0d;
+$code-background-color: #0d0d0d;
+$table-background-color: #000000;
+$feedback-color: #050505;
+
+// Text — dark:text-white, secondary dark:text-neutral-300 (#d4d4d4)
+$body-text-color: #ffffff;
+$body-heading-color: #ffffff;
+$nav-child-link-color: #d4d4d4;       // neutral-300
+$search-result-preview-color: #d4d4d4;
+
+// Links — same blue-400 in both modes
+$link-color: #60a5fa;
+$btn-primary-color: #60a5fa;
+$base-button-color: #0d0d0d;
+
+// Borders
+$border-color: #1f1f1f;
+
+// Typography — same as light scheme
+$body-font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  Roboto, Helvetica, Arial, sans-serif;
+$mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+  Consolas, "Liberation Mono", "Courier New", monospace;
+$root-font-size: 16px;
+$body-line-height: 1.65;

@@ -7,9 +7,6 @@ remote_theme: just-the-docs/just-the-docs
 
 color_scheme: bushuyeu
 
-custom_css:
-  - assets/css/custom.scss
-
 aux_links:
   "GitHub":
     - "https://github.com/bushuyeu/robotica"
@@ -19,7 +16,6 @@ aux_links:
 nav_enabled: true
 search_enabled: true
 
-footer_content: "robotica &mdash; HAW-AI-I / University of Hawaii"
 
 plugins:
   - jekyll-remote-theme

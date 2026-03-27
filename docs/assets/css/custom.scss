@@ -1,63 +1,17 @@
 ---
 ---
 
-// Overrides to align with bushuyeu.com visual language
-// Source: dark:text-neutral-300 for secondary, tracking-tight nav, tracking-tighter h1
-
-// Load Geist font from Google Fonts (closest public CDN source)
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400&display=swap");
+// Neutral overrides applied in both light and dark modes.
+// Color-specific dark overrides live in _sass/color_schemes/bushuyeu-dark.scss.
 
 // Letter-spacing matching bushuyeu.com Tailwind classes:
-//   h1: tracking-tighter (-0.05em), nav: tracking-tight (-0.025em)
+//   h1: tracking-tighter (-0.05em), nav/h2-h4: tracking-tight (-0.025em)
 h1 { letter-spacing: -0.05em; font-weight: 600; }
 h2, h3, h4 { letter-spacing: -0.025em; }
-
 .site-nav .nav-list { letter-spacing: -0.025em; }
 
-// Nav & footer secondary text — dark:text-neutral-300 (#d4d4d4)
-.site-nav a,
-.site-footer a,
-.site-footer {
-  color: #d4d4d4;
-}
-
-.site-nav a:hover,
-.site-footer a:hover {
-  color: #e5e5e5;  // dark:hover:text-neutral-200
-}
-
-// Active nav link — white, not blue (bushuyeu.com uses no special active color)
-.nav-list .nav-list-item .nav-list-link.active {
-  background-color: #111111;
-  color: #ffffff;
-  font-weight: 600;
-}
-
 // Content links — underline matching bushuyeu.com
-.main-content a {
-  text-decoration: underline;
-}
+.main-content a { text-decoration: underline; }
 
-// Code blocks — subtle dark background, tight border
-pre.highlight,
-div.highlight {
-  background-color: #0d0d0d;
-  border: 1px solid #1f1f1f;
-}
-
-// Search input
-.search-input {
-  background-color: #0d0d0d;
-  color: #ffffff;
-  border-color: #2a2a2a;
-}
-
-// Footer
-.site-footer {
-  border-top-color: #1f1f1f;
-}
-
-// Table rows — keep pure black, alternating with barely-visible stripe
-.main-content table tr:nth-child(odd) {
-  background-color: #050505;
-}
+// Active nav link — bold, no underline
+.nav-list .nav-list-item .nav-list-link.active { font-weight: 600; }
