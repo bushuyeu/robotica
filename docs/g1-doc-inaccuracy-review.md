@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 # Inaccuracy Review: "Humanoid Robot Info for AI Lab People"
 
 Cross-referenced against verified project knowledge (robotica memory, hardware-deployment-guide, gr00t-sim notes, and working configurations as of 2026-03-19). Items marked **(VERIFIED)** were confirmed by live testing on the robot.
