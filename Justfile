@@ -59,7 +59,9 @@ check:
 
     echo ""
     echo "═══ Checking GR00T Docker ═══"
-    if docker images 2>/dev/null | grep -q 'gr00t_wbc-deploy-root'; then
+    if ! command -v docker &>/dev/null; then
+        fail "Docker not installed (see https://docs.docker.com/engine/install/)"
+    elif docker images 2>/dev/null | grep -q 'gr00t_wbc.*-root'; then
         ok "GR00T Docker image"
     else
         fail "GR00T Docker image missing (run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root)"
@@ -214,7 +216,11 @@ groot-check:
     #!/usr/bin/env bash
     set -euo pipefail
     GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
-    if docker images 2>/dev/null | grep -q 'gr00t_wbc-deploy-root'; then
+    if ! command -v docker &>/dev/null; then
+        echo -e "${RED}[FAIL]${NC} Docker not installed"
+        echo "  Install: https://docs.docker.com/engine/install/"
+        exit 1
+    elif docker images 2>/dev/null | grep -q 'gr00t_wbc.*-root'; then
         echo -e "${GREEN}[OK]${NC} GR00T Docker image found"
     else
         echo -e "${RED}[FAIL]${NC} GR00T Docker image missing. Run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root"
