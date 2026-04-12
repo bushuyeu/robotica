@@ -55,12 +55,14 @@ just check           # verify everything is set up
 |---------|-------------|
 | `just setup` | Run bootstrap script |
 | `just check` | Verify envs, models, checkpoints |
+| `just quickstart` | Guided first run (Stage 1 + 2 with validation) |
 | `just phmr-run <video>` | Extract 3D pose from video |
 | `just phmr-batch` | Process all videos in `data/videos/` |
 | `just gmr-retarget <video> [robot]` | Retarget to robot (default: `unitree_g1`) |
 | `just gmr-batch [robot]` | Batch retarget all processed videos |
 | `just pipeline <video> [robot]` | Full Stage 1 + 2 |
 | `just pipeline-batch [robot]` | Batch full pipeline |
+| `just groot-check` | Verify GR00T Docker image is available |
 | `just groot-sim <video>` | Print GR00T Docker instructions |
 | `just results` | List all outputs |
 | `just drive-check` | Verify rclone + gdrive remote |

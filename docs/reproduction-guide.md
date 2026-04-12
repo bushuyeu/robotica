@@ -121,12 +121,17 @@ just check       # verify everything is set up (should show all [OK])
 The `setup.sh` script is idempotent — safe to re-run if something fails partway through.
 
 ### What `setup.sh` does:
-1. Clones PromptHMR, GMR, GR00T-WholeBodyControl from `haw-ai-i` GitHub
-2. Creates separate Python venvs for PromptHMR (Python 3.12) and GMR (Python 3.12)
-3. Installs all dependencies including custom wheels
-4. Downloads body models and checkpoints from GCS bucket (or prompts for SMPL-X credentials as fallback)
-5. Symlinks body models from PromptHMR → GMR
-6. Pulls the GR00T Docker image
+1. **Pre-flight checks** — verifies NVIDIA driver, git, git-lfs, curl, ffmpeg, disk space, gcloud auth
+2. **Install uv** — Python package manager (if not already installed)
+3. **Install just** — command runner (if not already installed)
+4. **Clone repos** — PromptHMR, GMR, GR00T-WholeBodyControl from GitHub
+5. **PromptHMR venv + deps** — creates Python 3.12 venv, installs PyTorch, custom wheels, and all dependencies
+6. **PromptHMR data** — downloads body models and checkpoints from GCS bucket (or prompts for SMPL-X credentials as fallback)
+7. **GMR venv + deps** — creates Python 3.12 venv, installs MuJoCo and dependencies
+8. **Symlink body models** — links SMPL-X files from PromptHMR → GMR (avoids duplication)
+9. **GR00T advisory** — prints Docker setup instructions (does **not** pull the image automatically)
+10. **Shared directories + .env** — creates `data/videos/`, `results/`, and `.env` from template
+11. **Meta-repo venv** — creates a venv for wandb and Hugging Face Hub integration
 
 > **Why separate venvs?** PromptHMR, GMR, and GR00T-WBC have irreconcilable dependency trees — different PyTorch builds, different Python versions (3.12 vs 3.10), and conflicting transitive dependencies. A single environment cannot satisfy all three.
 

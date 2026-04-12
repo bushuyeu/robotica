@@ -212,6 +212,7 @@ else
                 gcloud storage cp -r gs://io-robotica/PromptHMR/data/wheels "$PHMR/data/"
             else
                 info "Downloading custom wheels from Google Drive..."
+                uv pip install "gdown>=5.0"
                 uv run gdown --folder -O ./data/ \
                     https://drive.google.com/drive/folders/151gPvMaUWok_pDQT6h8Rpvk_rCcKvcWZ?usp=sharing
             fi
