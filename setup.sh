@@ -16,6 +16,87 @@ skip() { echo -e "${YELLOW}[SKIP]${NC} $1"; }
 info() { echo -e "${YELLOW}[INFO]${NC} $1"; }
 err()  { echo -e "${RED}[ERROR]${NC} $1"; }
 
+ERRORS=0
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+preflight_fail() { echo -e "${RED}[FAIL]${NC} $1"; ERRORS=$((ERRORS + 1)); }
+
+# ── Pre-flight checks ──────────────────────────────────────────────────────
+echo ""
+echo "═══ Pre-flight checks ═══"
+
+# NVIDIA driver / GPU
+if command -v nvidia-smi &>/dev/null; then
+    NVIDIA_OUTPUT=$(nvidia-smi 2>/dev/null)
+    DRIVER_VER=$(echo "$NVIDIA_OUTPUT" | grep -oP 'Driver Version: \K[\d.]+' || echo "unknown")
+    CUDA_VER=$(echo "$NVIDIA_OUTPUT" | grep -oP 'CUDA Version: \K[\d.]+' || echo "unknown")
+    ok "NVIDIA driver $DRIVER_VER (CUDA $CUDA_VER)"
+else
+    preflight_fail "nvidia-smi not found — NVIDIA driver required (https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)"
+fi
+
+# git
+if command -v git &>/dev/null; then
+    ok "git $(git --version | awk '{print $3}')"
+else
+    preflight_fail "git not found (run: sudo apt install git)"
+fi
+
+# git-lfs
+if command -v git-lfs &>/dev/null; then
+    ok "git-lfs $(git-lfs --version | awk '{print $1}' | cut -d/ -f2)"
+else
+    preflight_fail "git-lfs not found — required for GR00T model files (run: sudo apt install git-lfs)"
+fi
+
+# curl
+if command -v curl &>/dev/null; then
+    ok "curl"
+else
+    preflight_fail "curl not found (run: sudo apt install curl)"
+fi
+
+# ffmpeg
+if command -v ffmpeg &>/dev/null; then
+    ok "ffmpeg"
+else
+    preflight_fail "ffmpeg not found — required for video processing (run: sudo apt install ffmpeg)"
+fi
+
+# Disk space (need ~50 GB free)
+FREE_GB=$(df -BG "$SCRIPT_DIR" | awk 'NR==2 {gsub(/G/,"",$4); print $4}')
+if [ "$FREE_GB" -ge 50 ] 2>/dev/null; then
+    ok "${FREE_GB} GB free disk space"
+elif [ "$FREE_GB" -ge 30 ] 2>/dev/null; then
+    warn "${FREE_GB} GB free — setup needs ~50 GB total; may run out during large downloads"
+else
+    preflight_fail "Only ${FREE_GB} GB free — need at least 50 GB (checkpoints, models, Docker image)"
+fi
+
+# gcloud (optional but preferred)
+HAS_GCLOUD=false
+if command -v gcloud &>/dev/null; then
+    GCLOUD_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null | head -1)
+    if [ -n "$GCLOUD_ACCOUNT" ]; then
+        ok "gcloud authenticated as $GCLOUD_ACCOUNT"
+        HAS_GCLOUD=true
+    else
+        warn "gcloud installed but not authenticated — run: gcloud auth login"
+        info "Will fall back to manual SMPL-X credential download and Google Drive"
+    fi
+else
+    info "gcloud CLI not found — will use fallback download methods"
+    info "  (Install gcloud: https://cloud.google.com/sdk/docs/install)"
+fi
+
+if [ $ERRORS -gt 0 ]; then
+    echo ""
+    err "$ERRORS pre-flight check(s) failed. Fix the issues above before continuing."
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}Pre-flight checks passed.${NC}"
+
 # ── A: Install uv ───────────────────────────────────────────────────────────
 echo ""
 echo "═══ A: uv ═══"
@@ -71,7 +152,8 @@ clone_repo GR00T-WholeBodyControl \
     https://github.com/NVlabs/GR00T-WholeBodyControl.git
 
 if [ -d GR00T-WholeBodyControl ]; then
-    (cd GR00T-WholeBodyControl && git lfs install 2>/dev/null || true)
+    (cd GR00T-WholeBodyControl && git lfs install)
+    ok "git-lfs initialized for GR00T"
 fi
 
 # ── D: PromptHMR venv + deps ────────────────────────────────────────────────
@@ -119,7 +201,7 @@ else
 
         # Custom wheels (pull from GCS or fall back to Google Drive)
         if [ ! -d data/wheels ]; then
-            if command -v gcloud &>/dev/null; then
+            if [ "$HAS_GCLOUD" = true ]; then
                 info "Downloading custom wheels from GCS..."
                 gcloud storage cp -r gs://io-robotica/PromptHMR/data/wheels "$PHMR/data/"
             else
@@ -127,6 +209,22 @@ else
                 uv run gdown --folder -O ./data/ \
                     https://drive.google.com/drive/folders/151gPvMaUWok_pDQT6h8Rpvk_rCcKvcWZ?usp=sharing
             fi
+        fi
+
+        # Validate wheels downloaded successfully
+        EXPECTED_WHEELS=(gloss_rs detectron2 droid_backends_intr sam2 lietorch)
+        MISSING_WHEELS=()
+        for w in "${EXPECTED_WHEELS[@]}"; do
+            if ! ls data/wheels/${w}-*.whl &>/dev/null; then
+                MISSING_WHEELS+=("$w")
+            fi
+        done
+        if [ ${#MISSING_WHEELS[@]} -gt 0 ]; then
+            err "Missing wheels: ${MISSING_WHEELS[*]}"
+            err "Download failed or was rate-limited. Manual download:"
+            err "  https://drive.google.com/drive/folders/151gPvMaUWok_pDQT6h8Rpvk_rCcKvcWZ"
+            err "  Place .whl files in: $PHMR/data/wheels/"
+            exit 1
         fi
 
         # Fix gloss conflict and install wheels
@@ -150,13 +248,13 @@ if [ -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ] \
     && [ -f "$PHMR/data/pretrain/vitpose-h-coco_25.pth" ]; then
     skip "PromptHMR data already present (body models + checkpoints)"
 else
-    if command -v gcloud &>/dev/null; then
+    if [ "$HAS_GCLOUD" = true ]; then
         info "Pulling PromptHMR data from GCS bucket..."
         gcloud storage cp -r "$GCS_BUCKET/body_models" "$PHMR/data/"
         gcloud storage cp -r "$GCS_BUCKET/pretrain" "$PHMR/data/"
         ok "PromptHMR data fetched from GCS"
     else
-        info "gcloud CLI not found — falling back to interactive fetch scripts"
+        info "gcloud not available — falling back to interactive fetch scripts"
         info "You will be prompted for SMPL-X and SMPL credentials."
         info "(Register at https://smpl-x.is.tue.mpg.de and https://smpl.is.tue.mpg.de)"
         echo ""
@@ -171,6 +269,20 @@ else
         )
         ok "PromptHMR checkpoints fetched"
     fi
+
+    # Validate critical files were downloaded
+    if [ ! -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ]; then
+        err "SMPL-X body models missing after download"
+        err "  Manual fix: download from https://smpl-x.is.tue.mpg.de"
+        err "  Place SMPLX_NEUTRAL.pkl in: $PHMR/data/body_models/smplx/"
+        exit 1
+    fi
+    if [ ! -f "$PHMR/data/pretrain/vitpose-h-coco_25.pth" ]; then
+        err "PromptHMR checkpoints missing after download"
+        err "  Manual fix: see PromptHMR/scripts/fetch_data.sh for download URLs"
+        exit 1
+    fi
+    ok "PromptHMR data validated"
 fi
 
 # ── F: GMR venv + deps ──────────────────────────────────────────────────────
