@@ -57,10 +57,37 @@ export PATH="$HOME/.local/bin:$PATH"
 # Install system dependencies
 sudo apt update && sudo apt install -y git git-lfs curl ffmpeg
 
-# Verify Docker + NVIDIA
-docker --version
-nvidia-container-cli info
+# Verify NVIDIA driver
+nvidia-smi
 ```
+
+### Setting up Docker with GPU support (required for Stage 3)
+
+Stage 3 (GR00T-WBC) runs inside a Docker container that needs GPU access. If you already have `docker --version` and `nvidia-container-cli info` working, skip this section.
+
+```bash
+# Install Docker (official method)
+curl -fsSL https://get.docker.com | sh
+
+# Allow your user to run Docker without sudo (requires logout/login after)
+sudo usermod -aG docker $USER
+newgrp docker   # apply group change in current shell
+
+# Install NVIDIA Container Toolkit (GPU access inside Docker)
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+    | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+    | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+    | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt update && sudo apt install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+
+# Verify GPU is visible inside Docker
+docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi
+```
+
+> **Common issue:** If you see "permission denied" when running `docker`, you need to log out and back in (or reboot) after the `usermod` command for the group change to take effect.
 
 ### Setting up Google Cloud access (recommended)
 
