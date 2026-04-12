@@ -30,7 +30,7 @@ You do not need a background in machine learning or robotics to follow this guid
 
 - **Hardware:** Linux workstation with NVIDIA GPU (RTX 3090+, CUDA compute 8.6+)
 - **Software:** git, curl, bash, ffmpeg, Docker, NVIDIA Container Toolkit
-- **Accounts:** SMPL-X model credentials (register at https://smpl-x.is.tue.mpg.de)
+- **Accounts:** `gcloud` CLI with access to `gs://io-robotica` (or SMPL-X credentials at https://smpl-x.is.tue.mpg.de as fallback)
 - **Package manager:** [uv](https://astral.sh/uv) (v0.10.2+)
 
 **Disk space and time estimates:**
@@ -38,7 +38,7 @@ You do not need a background in machine learning or robotics to follow this guid
 | Component | Disk Space | Notes |
 |-----------|-----------|-------|
 | PromptHMR checkpoints | ~8 GB | Downloaded by `setup.sh` |
-| SMPL-X body models | ~1 GB | Shared via symlink between PromptHMR and GMR |
+| SMPL-X body models | ~1 GB | Pulled from GCS; symlinked between PromptHMR and GMR |
 | GR00T-WBC Docker image | ~31 GB | Pulled during setup |
 | Per-video results | ~50 MB | Stages 1 + 2 combined |
 | **Total minimum** | **~50 GB** | Free disk before starting |
@@ -79,10 +79,9 @@ The `setup.sh` script is idempotent — safe to re-run if something fails partwa
 1. Clones PromptHMR, GMR, GR00T-WholeBodyControl from `haw-ai-i` GitHub
 2. Creates separate Python venvs for PromptHMR (Python 3.12) and GMR (Python 3.12)
 3. Installs all dependencies including custom wheels
-4. Downloads body models (SMPL/SMPL-X) — will prompt for credentials
-5. Downloads checkpoints and pretrained models
-6. Symlinks body models from PromptHMR → GMR
-7. Pulls the GR00T Docker image
+4. Downloads body models and checkpoints from GCS bucket (or prompts for SMPL-X credentials as fallback)
+5. Symlinks body models from PromptHMR → GMR
+6. Pulls the GR00T Docker image
 
 > **Why separate venvs?** PromptHMR, GMR, and GR00T-WBC have irreconcilable dependency trees — different PyTorch builds, different Python versions (3.12 vs 3.10), and conflicting transitive dependencies. A single environment cannot satisfy all three.
 

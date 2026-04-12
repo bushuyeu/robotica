@@ -39,7 +39,7 @@ robotica/
 
 - Linux with NVIDIA GPU (CUDA 12.6+)
 - `git`, `curl`, `bash`
-- SMPL-X credentials (register at https://smpl-x.is.tue.mpg.de)
+- `gcloud` CLI with access to `gs://io-robotica` (or SMPL-X credentials as fallback — register at https://smpl-x.is.tue.mpg.de)
 
 ## Quickstart
 

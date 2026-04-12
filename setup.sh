@@ -117,11 +117,16 @@ else
         uv pip install pip
         uv pip install -e python_libs/chumpy --no-build-isolation
 
-        # Custom wheels (download from Google Drive if missing)
+        # Custom wheels (pull from GCS or fall back to Google Drive)
         if [ ! -d data/wheels ]; then
-            info "Downloading custom wheels..."
-            uv run gdown --folder -O ./data/ \
-                https://drive.google.com/drive/folders/151gPvMaUWok_pDQT6h8Rpvk_rCcKvcWZ?usp=sharing
+            if command -v gcloud &>/dev/null; then
+                info "Downloading custom wheels from GCS..."
+                gcloud storage cp -r gs://io-robotica/PromptHMR/data/wheels "$PHMR/data/"
+            else
+                info "Downloading custom wheels from Google Drive..."
+                uv run gdown --folder -O ./data/ \
+                    https://drive.google.com/drive/folders/151gPvMaUWok_pDQT6h8Rpvk_rCcKvcWZ?usp=sharing
+            fi
         fi
 
         # Fix gloss conflict and install wheels
@@ -136,32 +141,36 @@ else
     ok "PromptHMR deps installed"
 fi
 
-# ── E: PromptHMR body models + checkpoints ──────────────────────────────────
+# ── E: PromptHMR data (body models + checkpoints) ───────────────────────────
 echo ""
-echo "═══ E: PromptHMR body models + checkpoints ═══"
+echo "═══ E: PromptHMR data (body models + checkpoints) ═══"
+GCS_BUCKET="gs://io-robotica/PromptHMR/data"
 
-if [ -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ]; then
-    skip "SMPL-X body models already present"
+if [ -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ] \
+    && [ -f "$PHMR/data/pretrain/vitpose-h-coco_25.pth" ]; then
+    skip "PromptHMR data already present (body models + checkpoints)"
 else
-    info "Body models not found. Running interactive fetch script..."
-    info "You will be prompted for SMPL-X and SMPL credentials."
-    info "(Register at https://smpl-x.is.tue.mpg.de and https://smpl.is.tue.mpg.de)"
-    echo ""
-    (cd "$PHMR" && bash scripts/fetch_smplx.sh)
-    ok "Body models fetched"
-fi
-
-if [ -f "$PHMR/data/pretrain/vitpose-h-coco_25.pth" ]; then
-    skip "PromptHMR checkpoints already present"
-else
-    info "Downloading PromptHMR checkpoints and pretrained models..."
-    (
-        cd "$PHMR"
-        export VIRTUAL_ENV="$PHMR/.venv"
-        export PATH="$VIRTUAL_ENV/bin:$PATH"
-        bash scripts/fetch_data.sh
-    )
-    ok "PromptHMR checkpoints fetched"
+    if command -v gcloud &>/dev/null; then
+        info "Pulling PromptHMR data from GCS bucket..."
+        gcloud storage cp -r "$GCS_BUCKET/body_models" "$PHMR/data/"
+        gcloud storage cp -r "$GCS_BUCKET/pretrain" "$PHMR/data/"
+        ok "PromptHMR data fetched from GCS"
+    else
+        info "gcloud CLI not found — falling back to interactive fetch scripts"
+        info "You will be prompted for SMPL-X and SMPL credentials."
+        info "(Register at https://smpl-x.is.tue.mpg.de and https://smpl.is.tue.mpg.de)"
+        echo ""
+        (cd "$PHMR" && bash scripts/fetch_smplx.sh)
+        ok "Body models fetched"
+        info "Downloading PromptHMR checkpoints and pretrained models..."
+        (
+            cd "$PHMR"
+            export VIRTUAL_ENV="$PHMR/.venv"
+            export PATH="$VIRTUAL_ENV/bin:$PATH"
+            bash scripts/fetch_data.sh
+        )
+        ok "PromptHMR checkpoints fetched"
+    fi
 fi
 
 # ── F: GMR venv + deps ──────────────────────────────────────────────────────

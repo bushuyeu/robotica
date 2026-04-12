@@ -65,7 +65,7 @@ Each sub-repo has its own Python virtual environment due to irreconcilable depen
 
 - Linux workstation with NVIDIA GPU (CUDA 12.6+)
 - Docker + NVIDIA Container Toolkit (for GR00T-WBC)
-- SMPL-X credentials ([register here](https://smpl-x.is.tue.mpg.de))
+- `gcloud` CLI with access to `gs://io-robotica` (or [SMPL-X credentials](https://smpl-x.is.tue.mpg.de) as fallback)
 - ~50 GB free disk space
 
 ## Documentation
