@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # robotica — idempotent bootstrap script
-# Usage: bash setup.sh
+# Usage: bash setup.sh [--force]
+#   --force  re-run all sections even if they appear complete
 set -euo pipefail
+
+FORCE=false
+if [ "${1:-}" = "--force" ]; then
+    FORCE=true
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -169,8 +175,8 @@ else
     ok "PromptHMR venv created"
 fi
 
-# Check if torch is already installed as a proxy for "deps installed"
-if "$PHMR/.venv/bin/python" -c "import torch" 2>/dev/null; then
+# Check if all key deps are installed (torch + custom wheels)
+if [ "$FORCE" = false ] && "$PHMR/.venv/bin/python" -c "import torch; import detectron2; import chumpy" 2>/dev/null; then
     skip "PromptHMR deps already installed"
 else
     info "Installing PromptHMR dependencies (this may take a while)..."
@@ -244,7 +250,7 @@ echo ""
 echo "═══ E: PromptHMR data (body models + checkpoints) ═══"
 GCS_BUCKET="gs://io-robotica/PromptHMR/data"
 
-if [ -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ] \
+if [ "$FORCE" = false ] && [ -f "$PHMR/data/body_models/smplx/SMPLX_NEUTRAL.pkl" ] \
     && [ -f "$PHMR/data/pretrain/vitpose-h-coco_25.pth" ]; then
     skip "PromptHMR data already present (body models + checkpoints)"
 else
@@ -298,7 +304,7 @@ else
     ok "GMR venv created"
 fi
 
-if "$GMR/.venv/bin/python" -c "import mujoco" 2>/dev/null; then
+if [ "$FORCE" = false ] && "$GMR/.venv/bin/python" -c "import mujoco" 2>/dev/null; then
     skip "GMR deps already installed"
 else
     info "Installing GMR dependencies..."
