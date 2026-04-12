@@ -207,6 +207,44 @@ pipeline video robot="unitree_g1":
     just phmr-run "{{video}}"
     just gmr-retarget "{{video}}" "{{robot}}"
 
+# Guided quickstart: run the full pipeline with output verification
+quickstart video robot="unitree_g1":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
+    VIDEO="{{video}}"
+    ROBOT="{{robot}}"
+    NAME="$(basename "${VIDEO%.*}")"
+
+    echo -e "${GREEN}═══ Quickstart: $NAME ═══${NC}"
+    echo ""
+
+    # Stage 1: PromptHMR
+    echo -e "${YELLOW}[Stage 1/2]${NC} Running PromptHMR..."
+    just phmr-run "$VIDEO"
+    if [ ! -f "$RESULTS_DIR/$NAME/phmr_results.pkl" ]; then
+        echo -e "${RED}[ERROR]${NC} Stage 1 failed: $RESULTS_DIR/$NAME/phmr_results.pkl not found."
+        echo "  Check GPU memory, dependencies, and logs above."
+        exit 1
+    fi
+    echo -e "${GREEN}[OK]${NC} PromptHMR results verified."
+    echo ""
+
+    # Stage 2: GMR retarget
+    echo -e "${YELLOW}[Stage 2/2]${NC} Running GMR retarget..."
+    just gmr-retarget "$VIDEO" "$ROBOT"
+    if [ ! -f "$RESULTS_DIR/$NAME/retarget_${ROBOT}.pkl" ]; then
+        echo -e "${RED}[ERROR]${NC} Stage 2 failed: $RESULTS_DIR/$NAME/retarget_${ROBOT}.pkl not found."
+        echo "  Check dependencies and logs above."
+        exit 1
+    fi
+    echo -e "${GREEN}[OK]${NC} Retarget results verified."
+
+    echo ""
+    echo -e "${GREEN}═══ Quickstart complete: $NAME ═══${NC}"
+    echo "  PromptHMR → $RESULTS_DIR/$NAME/phmr_results.pkl"
+    echo "  Retarget  → $RESULTS_DIR/$NAME/retarget_${ROBOT}.pkl"
+
 # Batch full pipeline
 pipeline-batch robot="unitree_g1":
     #!/usr/bin/env bash
