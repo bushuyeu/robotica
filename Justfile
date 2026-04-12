@@ -263,7 +263,7 @@ groot-sim video:
     echo "   python gr00t_wbc/control/main/teleop/publish_upper_body_from_results.py \\"
     echo "       --results /root/Projects/results/$NAME/retarget_unitree_g1.pkl \\"
     echo "       --loop --teleop-frequency 30 --hand-mode zero \\"
-    echo "       --speed 0.25 --initial-pose-seconds 5.0 --upper-body-only"
+    echo "       --speed 0.25 --initial-pose-seconds 10.0 --upper-body-only"
     echo ""
     echo "5. In Terminal 1 (NOT the viewer), press ']' to activate, wait 5s, then press '9' to release elastic band."
 
