@@ -84,6 +84,11 @@ check:
 phmr-run video:
     #!/usr/bin/env bash
     set -euo pipefail
+    RED='\033[0;31m'; NC='\033[0m'
+    if [ ! -f .env ] || [ -z "${PHMR_DIR:-}" ]; then
+        echo -e "${RED}[ERROR]${NC} .env file missing or incomplete. Run: bash setup.sh"
+        exit 1
+    fi
     VIDEO="{{video}}"
     ABS_VIDEO="$(realpath "$VIDEO")"
     NAME="$(basename "${VIDEO%.*}")"
@@ -134,6 +139,11 @@ phmr-batch:
 gmr-retarget video robot="unitree_g1":
     #!/usr/bin/env bash
     set -euo pipefail
+    RED='\033[0;31m'; NC='\033[0m'
+    if [ ! -f .env ] || [ -z "${GMR_DIR:-}" ]; then
+        echo -e "${RED}[ERROR]${NC} .env file missing or incomplete. Run: bash setup.sh"
+        exit 1
+    fi
     VIDEO="{{video}}"
     ROBOT="{{robot}}"
     NAME="$(basename "${VIDEO%.*}")"
