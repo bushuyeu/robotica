@@ -16,7 +16,11 @@ Quick reference for technical terms used throughout this project. Definitions ar
 
 **CUDA** — NVIDIA's programming platform that lets software run computations on a GPU instead of the CPU. Most deep-learning frameworks require CUDA to train and run models efficiently.
 
+**DDS (Data Distribution Service)** — A networking protocol for real-time communication between software components. ROS 2 uses DDS under the hood so that the control loop and motion publisher can talk to each other, even across Docker containers.
+
 **Detectron2** — A computer-vision library from Meta (Facebook) that can detect and segment people and objects in images. In this pipeline it helps locate the person in each video frame.
+
+**DISPLAY** — An environment variable on Linux that tells graphical applications which screen to draw on. Docker containers need the host's `DISPLAY` value (e.g., `:2`) to show windows like the MuJoCo viewer. See also **X11**.
 
 **Docker** — A tool that packages software and all of its dependencies into an isolated "container." This project uses Docker so that GR00T-WBC can run with the exact libraries it needs without conflicting with the rest of your system.
 
@@ -25,6 +29,10 @@ Quick reference for technical terms used throughout this project. Definitions ar
 **DROID-SLAM** — An algorithm that estimates how the camera moved while filming. Knowing the camera motion lets the pipeline convert detected poses from camera-relative coordinates into real-world coordinates.
 
 **Elastic band** — A virtual spring in the GR00T-WBC simulator that holds the robot in mid-air so it does not fall while you set things up. You release it (press `9`) once the balance policy is active and the robot is ready to stand on its own.
+
+**gcloud** — Google's command-line tool for interacting with Google Cloud Platform. This project uses `gcloud storage cp` to download body models and checkpoints from a shared GCS bucket, avoiding manual credential registration.
+
+**GCS (Google Cloud Storage)** — Google's cloud file storage service. The project stores shared data (body models, checkpoints, wheels) in the `gs://io-robotica` bucket so team members can download them quickly.
 
 **GPU (Graphics Processing Unit)** — A specialized processor originally designed for rendering graphics, now widely used to accelerate machine-learning workloads because it can perform many calculations in parallel.
 
@@ -48,8 +56,14 @@ Quick reference for technical terms used throughout this project. Definitions ar
 
 **Symlink (symbolic link)** — A file-system shortcut that points to another file or folder. This project symlinks body-model files from PromptHMR into GMR so both repos share the same data without duplicating large files on disk.
 
+**tmux** — A terminal multiplexer — a program that lets you run multiple terminal sessions inside one window and keep them running even if you disconnect. Useful for Stage 3 hardware deployment, which requires two terminals simultaneously.
+
+**URDF (Unified Robot Description Format)** — An XML file format that describes a robot's physical structure — its links (body parts), joints, and how they connect. GMR uses a URDF file for the Unitree G1 to know the robot's joint limits and proportions during retargeting.
+
 **Venv (virtual environment)** — An isolated Python installation. Each sub-repo in this project uses its own venv so that conflicting library versions do not interfere with each other.
 
 **ViTPose** — A vision-transformer model that detects 2D body keypoints (shoulders, elbows, wrists, etc.) in an image. The pipeline uses ViTPose-H (the "huge" variant) for accurate keypoint estimation.
 
 **WBC (Whole-Body Control)** — A control approach that coordinates all of a robot's joints at once rather than moving each limb independently. GR00T-WBC uses whole-body control to keep the robot balanced while it replays upper-body motions.
+
+**X11** — The display system used by most Linux desktops to show graphical windows. Stage 3 needs X11 so the MuJoCo viewer can open a window from inside a Docker container. The `xhost +local:docker` command grants Docker permission to use your display. If you are connecting over SSH, you need `ssh -X` (X11 forwarding) or a remote desktop solution like VNC.

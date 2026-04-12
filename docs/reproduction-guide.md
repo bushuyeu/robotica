@@ -288,15 +288,18 @@ This stage runs inside Docker and requires **two terminals**.
 
 ### 5.1 Prepare X11 display
 
+The MuJoCo viewer needs to open a graphical window. On Linux, this uses **X11** — a system that manages display output. Docker containers don't have their own display, so you need to share yours with the container.
+
+> **Working over SSH?** You need X11 forwarding enabled: connect with `ssh -X user@host`. Alternatively, use a remote desktop (VNC, NoMachine) for better performance. Without a display server, the MuJoCo viewer cannot open.
+
 On the **host** (not inside Docker), find your display and allow Docker access:
 
 ```bash
 # Find your display number
-xdpyinfo | head -2
-# Example output: "name of display:    :2"
+echo $DISPLAY
+# Example output: ":2" — if blank, you may not have a display server running
 
-# Allow Docker to access display
-export DISPLAY=:2    # use your actual display number
+# Allow Docker to access your display
 xhost +local:docker
 ```
 
