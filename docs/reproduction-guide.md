@@ -52,15 +52,33 @@ You do not need a background in machine learning or robotics to follow this guid
 ```bash
 # Install uv if not present
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source $HOME/.local/bin/env
+export PATH="$HOME/.local/bin:$PATH"
 
 # Install system dependencies
-sudo apt update && sudo apt install -y ffmpeg
+sudo apt update && sudo apt install -y git git-lfs curl ffmpeg
 
 # Verify Docker + NVIDIA
 docker --version
 nvidia-container-cli info
 ```
+
+### Setting up Google Cloud access (recommended)
+
+The fastest way to get body models and checkpoints is from our GCS bucket. If you don't have `gcloud`, `setup.sh` will fall back to manual downloads (slower, requires SMPL-X registration).
+
+```bash
+# Install the gcloud CLI
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL   # restart shell to pick up gcloud
+
+# Log in and verify bucket access
+gcloud auth login
+gcloud storage ls gs://io-robotica/   # should list bucket contents
+```
+
+If you **cannot get GCS access**, `setup.sh` will automatically fall back to:
+- Downloading SMPL-X body models via interactive credentials (register at [smpl-x.is.tue.mpg.de](https://smpl-x.is.tue.mpg.de) — approval may take 1-2 days)
+- Downloading checkpoints from Google Drive (may be rate-limited)
 
 ---
 
