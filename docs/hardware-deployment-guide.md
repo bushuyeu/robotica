@@ -151,24 +151,18 @@ The following example uses video `PXL_20260114_214954286` throughout. Replace wi
 
 ### 3.1 Prepare the retarget results
 
-Copy all retarget `.pkl` files to the Docker-accessible location. From the host:
+Copy retarget `.pkl` files to the Docker-accessible location. The deploy Docker container mounts the directory it is launched from (`~/Projects/robotica/GR00T-WholeBodyControl`), so results must be placed there — not in the standalone `~/Projects/GR00T-WholeBodyControl` directory used for simulation.
 
 ```bash
 cd ~/Projects/robotica
 
-# Copy a single video
-just groot-copy PXL_20260114_214954286
-
-# Or copy all processed videos at once
-just groot-copy-all
+# Copy results directly to the deploy Docker path
+mkdir -p GR00T-WholeBodyControl/resources/poses
+cp results/PXL_20260114_214954286/retarget_unitree_g1.pkl \
+   GR00T-WholeBodyControl/resources/poses/PXL_20260114_214954286.pkl
 ```
 
-Then copy to the Docker-mounted path (the Docker container mounts `~/Projects/robotica/GR00T-WholeBodyControl`, not the standalone directory):
-
-```bash
-cp ~/Projects/GR00T-WholeBodyControl/resources/poses/PXL_*.pkl \
-   ~/Projects/robotica/GR00T-WholeBodyControl/resources/poses/
-```
+> **Simulation vs. hardware paths:** The reproduction guide (simulation) uses the standalone `~/Projects/GR00T-WholeBodyControl` via `just groot-copy`. For hardware deployment, copy directly to `~/Projects/robotica/GR00T-WholeBodyControl` instead — the deploy container mounts this directory.
 
 ### 3.2 Find your Ethernet interface name
 
