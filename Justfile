@@ -81,6 +81,78 @@ check:
         exit 1
     fi
 
+# Guided first run: check → pick a video → Stage 1 → Stage 2 → Stage 3 instructions
+quickstart:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
+
+    echo "═══ Quickstart: Guided First Run ═══"
+    echo ""
+
+    # Step 1: Verify setup
+    echo "── Step 1/4: Checking setup ──"
+    if ! just check; then
+        echo ""
+        echo -e "${RED}Setup checks failed. Run 'bash setup.sh' first.${NC}"
+        exit 1
+    fi
+
+    echo ""
+    echo "── Step 2/4: Finding a video ──"
+    shopt -s nullglob
+    VIDEOS=("$VIDEO_DIR"/*.{mp4,avi,mov,mkv,MP4,AVI,MOV,MKV})
+    if [ ${#VIDEOS[@]} -eq 0 ]; then
+        echo -e "${YELLOW}No videos found in $VIDEO_DIR${NC}"
+        echo ""
+        echo "To get started, place a video file in the data/videos/ directory:"
+        echo "  cp /path/to/your/video.mp4 data/videos/"
+        echo ""
+        echo "Or download a sample from the team pool:"
+        echo "  https://drive.google.com/drive/folders/11I9UZfqr_JanmgzVx3qM0zNF3YzqaEuW"
+        exit 0
+    fi
+
+    VIDEO="${VIDEOS[0]}"
+    NAME="$(basename "${VIDEO%.*}")"
+    echo -e "${GREEN}Found ${#VIDEOS[@]} video(s). Using first: $NAME${NC}"
+
+    # Step 3: Stage 1 — PromptHMR
+    echo ""
+    echo "── Step 3/4: Stage 1 — Extract 3D pose (PromptHMR) ──"
+    if [ -f "$RESULTS_DIR/$NAME/phmr_results.pkl" ]; then
+        echo -e "${GREEN}[SKIP]${NC} PromptHMR results already exist for $NAME"
+    else
+        echo "This may take 10-30 minutes depending on video length and GPU."
+        echo ""
+        just phmr-run "$VIDEO"
+    fi
+
+    # Step 4: Stage 2 — GMR retarget
+    echo ""
+    echo "── Step 4/4: Stage 2 — Retarget to robot (GMR) ──"
+    if [ -f "$RESULTS_DIR/$NAME/retarget_unitree_g1.pkl" ]; then
+        echo -e "${GREEN}[SKIP]${NC} Retarget results already exist for $NAME"
+    else
+        just gmr-retarget "$VIDEO"
+    fi
+
+    # Done — print Stage 3 instructions
+    echo ""
+    echo "═══════════════════════════════════════"
+    echo -e "${GREEN}Stages 1 & 2 complete for: $NAME${NC}"
+    echo "═══════════════════════════════════════"
+    echo ""
+    echo "Results:"
+    echo "  $RESULTS_DIR/$NAME/phmr_results.pkl          (3D pose)"
+    echo "  $RESULTS_DIR/$NAME/retarget_unitree_g1.pkl   (robot joints)"
+    echo ""
+    echo "Next: Stage 3 — Simulate in GR00T-WBC (requires Docker + two terminals)."
+    echo "Run this for instructions:"
+    echo "  just groot-sim $VIDEO"
+    echo ""
+    echo "Or see the full guide: docs/reproduction-guide.md, Section 5"
+
 # Run PromptHMR on a single video
 phmr-run video:
     #!/usr/bin/env bash
