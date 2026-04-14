@@ -46,7 +46,9 @@ def upload_results_to_hf(
         uploaded_count = 0
 
         if not results_path.exists():
-            print(f"  [WARN] Results directory not found: {results_dir}", file=sys.stderr)
+            print(
+                f"  [WARN] Results directory not found: {results_dir}", file=sys.stderr
+            )
             return False
 
         for video_dir in sorted(results_path.iterdir()):
