@@ -5,8 +5,9 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 DRIVE_FOLDER_ID := "11I9UZfqr_JanmgzVx3qM0zNF3YzqaEuW"
 # Google Doc ID for the shared quick-ref document
 QUICKREF_DOC_ID := "1nB0O2PMIJ1lYWeAb37TYOTPj7q0LIIlm7W_WJAsrYX8"
-# Standalone GR00T repo mounted by Docker (override via .env or env var)
-GROOT_STANDALONE := env_var_or_default("GROOT_STANDALONE", env("HOME") / "Projects/GR00T-WholeBodyControl")
+# GR00T repo mounted by Docker — cloned by setup.sh into this repo's root.
+# Override via .env or env var if you maintain a separate clone elsewhere.
+GROOT_STANDALONE := env_var_or_default("GROOT_STANDALONE", justfile_directory() / "GR00T-WholeBodyControl")
 
 # Default: list available recipes
 default:
