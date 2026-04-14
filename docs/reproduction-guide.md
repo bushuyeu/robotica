@@ -310,14 +310,12 @@ xhost +local:docker
 
 ### 5.2 Copy retarget results to Docker-accessible location
 
-The Docker container mounts `~/Projects/GR00T-WholeBodyControl` (standalone path). Copy results there:
-
-> **Why copy to a separate path?** The Docker container's volume mount points to the standalone `~/Projects/GR00T-WholeBodyControl` directory, not the `robotica/GR00T-WholeBodyControl` sub-repo. Files must be placed where Docker can see them.
+The Docker container mounts the directory it is launched from — `~/Projects/robotica/GR00T-WholeBodyControl` per Section 5.3. Copy results there:
 
 ```bash
-mkdir -p ~/Projects/GR00T-WholeBodyControl/resources/poses/
+mkdir -p ~/Projects/robotica/GR00T-WholeBodyControl/resources/poses/
 cp results/<video_name>/retarget_unitree_g1.pkl \
-   ~/Projects/GR00T-WholeBodyControl/resources/poses/<video_name>.pkl
+   ~/Projects/robotica/GR00T-WholeBodyControl/resources/poses/<video_name>.pkl
 ```
 
 ### 5.3 Terminal 1 — Start control loop
@@ -411,7 +409,7 @@ In **Terminal 1** (the terminal running the control loop, NOT the viewer window)
 - **Legs shaking on bent knees:** Normal — the balance policy is actively stabilizing. Safe to proceed.
 - **`groups: cannot find name for group ID 994`:** Harmless Docker warning — can be safely ignored.
 - **Command pasting breaks in Docker terminal:** Multi-line paste with backslash continuations can fail inside the container. Paste commands as a single line, or type them manually.
-- **Retarget `.pkl` not found inside container:** The Docker container mounts `~/Projects/GR00T-WholeBodyControl` (standalone), not the `robotica` sub-repo. Make sure you copied the `.pkl` to the standalone repo's `resources/poses/` directory (see Section 5.2).
+- **Retarget `.pkl` not found inside container:** The Docker container mounts the directory it was launched from (`~/Projects/robotica/GR00T-WholeBodyControl` per Section 5.3). Make sure you copied the `.pkl` to that directory's `resources/poses/` subdirectory (see Section 5.2).
 
 ---
 

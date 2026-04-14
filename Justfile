@@ -59,10 +59,17 @@ check:
 
     echo ""
     echo "═══ Checking GR00T Docker ═══"
+    # Try rootless docker first, then fall back to sudo -n (non-interactive)
+    # because run_docker.sh --install --root installs the image into root's
+    # daemon, which a non-docker-group user can't inspect without sudo.
+    docker_has_image() {
+        docker image inspect "$1" >/dev/null 2>&1 \
+            || sudo -n docker image inspect "$1" >/dev/null 2>&1
+    }
     if ! command -v docker &>/dev/null; then
         fail "Docker not installed (see https://docs.docker.com/engine/install/)"
-    elif docker image inspect gr00t_wbc-deploy-root >/dev/null 2>&1 \
-        || docker image inspect nvgear/gr00t_wbc:latest >/dev/null 2>&1; then
+    elif docker_has_image gr00t_wbc-deploy-root \
+        || docker_has_image nvgear/gr00t_wbc:latest; then
         ok "GR00T Docker image"
     else
         fail "GR00T Docker image missing (run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root)"
