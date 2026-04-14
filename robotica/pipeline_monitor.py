@@ -165,7 +165,7 @@ def run_monitored(
     )
     errors = sum(1 for r in rows if r["status"] != "ok")
 
-    print(f"\n═══ Batch Summary ═══")
+    print("\n═══ Batch Summary ═══")
     print(f"  Total videos:     {len(rows)}")
     print(f"  Newly processed:  {newly_processed}")
     print(f"  Skipped (cached): {skipped}")
