@@ -27,6 +27,9 @@ wandb/
 # VS Code workspace
 *.code-workspace
 
+# Claude Code workspace (agent worktrees, session metadata)
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
