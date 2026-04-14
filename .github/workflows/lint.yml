@@ -21,6 +21,12 @@ jobs:
       - name: Validate Justfile
         run: just --summary
 
+      # Verifies every `just <recipe>` mentioned in README.md or docs/*.md
+      # maps to a real Justfile recipe. Catches drift when recipes are
+      # renamed or removed without updating documentation.
+      - name: Doc ↔ Justfile sync
+        run: bash .github/scripts/check-doc-commands.sh
+
       # shellcheck is preinstalled on ubuntu-latest runners.
       # --severity=error gates on real bugs (syntax, unset vars) and skips
       # style nits; tighten to warning/info once the baseline is clean.

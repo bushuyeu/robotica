@@ -1,0 +1,36 @@
+name: links
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - '.github/workflows/links.yml'
+  schedule:
+    # Weekly at Monday 06:00 UTC — catches external URL rot even when
+    # docs aren't being edited.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Walks every .md file, resolves relative links, section anchors,
+      # and external URLs. Verbose output, fails on broken links.
+      - name: Link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose --no-progress
+            --exclude-path .claude
+            --exclude-path GR00T-WholeBodyControl
+            --exclude-path PromptHMR
+            --exclude-path GMR
+            './**/*.md'
+          fail: true

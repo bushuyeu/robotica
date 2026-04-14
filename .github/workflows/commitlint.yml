@@ -1,0 +1,20 @@
+name: commitlint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 is required — commitlint inspects the full commit
+      # range between the PR base and head.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Enforces Conventional Commits on every commit in the PR
+      # (feat:, fix:, docs:, chore:, etc.). Matches the commitizen
+      # convention documented in CLAUDE.md.
+      - uses: wagoid/commitlint-github-action@v6
