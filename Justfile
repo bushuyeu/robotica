@@ -307,12 +307,18 @@ groot-check:
     #!/usr/bin/env bash
     set -euo pipefail
     GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+    # Fall back to sudo -n because run_docker.sh --install --root installs the
+    # image into root's daemon, invisible to a non-docker-group user.
+    docker_has_image() {
+        docker image inspect "$1" >/dev/null 2>&1 \
+            || sudo -n docker image inspect "$1" >/dev/null 2>&1
+    }
     if ! command -v docker &>/dev/null; then
         echo -e "${RED}[FAIL]${NC} Docker not installed"
         echo "  Install: https://docs.docker.com/engine/install/"
         exit 1
-    elif docker image inspect gr00t_wbc-deploy-root >/dev/null 2>&1 \
-        || docker image inspect nvgear/gr00t_wbc:latest >/dev/null 2>&1; then
+    elif docker_has_image gr00t_wbc-deploy-root \
+        || docker_has_image nvgear/gr00t_wbc:latest; then
         echo -e "${GREEN}[OK]${NC} GR00T Docker image found"
     else
         echo -e "${RED}[FAIL]${NC} GR00T Docker image missing. Run: cd $GROOT_DIR && ./docker/run_docker.sh --install --root"
