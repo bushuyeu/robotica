@@ -1,0 +1,28 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      # Parses the Justfile without executing recipes. Catches duplicate
+      # recipes (regression from #d7a248b), syntax errors, and undefined
+      # variables.
+      - name: Validate Justfile
+        run: just --summary
+
+      # shellcheck is preinstalled on ubuntu-latest runners.
+      # --severity=error gates on real bugs (syntax, unset vars) and skips
+      # style nits; tighten to warning/info once the baseline is clean.
+      - name: Shellcheck setup.sh
+        run: shellcheck --severity=error setup.sh
