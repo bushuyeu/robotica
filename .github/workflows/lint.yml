@@ -45,5 +45,12 @@ jobs:
       - name: Ruff check
         run: uv run --with ruff ruff check robotica/
 
+      - name: Ruff format check
+        run: uv run --with ruff ruff format --check robotica/ tests/
+
       - name: Mypy
         run: uv run --with mypy mypy robotica/ --ignore-missing-imports
+
+      # uv sync already installed pytest from the dev dependency-group.
+      - name: Pytest
+        run: uv run --group dev pytest tests/

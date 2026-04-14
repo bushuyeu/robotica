@@ -160,9 +160,7 @@ def run_monitored(
         and not r.get("phmr_skipped")
         and not r.get("gmr_skipped")
     )
-    skipped = sum(
-        1 for r in rows if r.get("phmr_skipped") and r.get("gmr_skipped")
-    )
+    skipped = sum(1 for r in rows if r.get("phmr_skipped") and r.get("gmr_skipped"))
     errors = sum(1 for r in rows if r["status"] != "ok")
 
     print("\n═══ Batch Summary ═══")
@@ -243,9 +241,7 @@ def _collect_videos(args: argparse.Namespace) -> list[str]:
         sys.exit(1)
 
     exts = (".mp4", ".avi", ".mov", ".mkv")
-    videos = sorted(
-        str(p) for p in video_path.iterdir() if p.suffix.lower() in exts
-    )
+    videos = sorted(str(p) for p in video_path.iterdir() if p.suffix.lower() in exts)
     if not videos:
         print(f"No videos found in {video_dir}", file=sys.stderr)
         sys.exit(1)
@@ -259,9 +255,7 @@ def main() -> None:
     parser.add_argument(
         "--wandb-project", default="robotica", help="wandb project name"
     )
-    parser.add_argument(
-        "--no-wandb", action="store_true", help="Disable wandb logging"
-    )
+    parser.add_argument("--no-wandb", action="store_true", help="Disable wandb logging")
     parser.add_argument(
         "--hf-upload", action="store_true", help="Upload results to HF Hub"
     )

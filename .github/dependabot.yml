@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Pin GitHub Actions versions — security + keeps node runtimes current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+
+  # Track uv-managed Python deps. Dependabot reads pyproject.toml + uv.lock.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope

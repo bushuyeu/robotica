@@ -11,5 +11,16 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.7",
+    "mypy>=1.11",
+]
+
 [tool.setuptools.packages.find]
 include = ["robotica*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

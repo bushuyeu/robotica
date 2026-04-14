@@ -1,0 +1,6 @@
+# Sites that 401/403 against unauthenticated CI runners even though the
+# URLs are valid in a browser. Lychee retries these with --accept anyway;
+# listing here is an extra belt-and-braces for the redirect chains.
+https://www\.reddit\.com/.*
+https://meshcapade\.com/.*
+http://nvcr\.io/.*

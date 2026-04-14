@@ -25,8 +25,10 @@ def extract_video_metadata(path: str | Path) -> dict:
 
     cmd = [
         "ffprobe",
-        "-v", "quiet",
-        "-print_format", "json",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
         "-show_format",
         "-show_streams",
         str(path),

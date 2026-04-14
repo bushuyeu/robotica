@@ -23,14 +23,24 @@ jobs:
 
       # Walks every .md file, resolves relative links, section anchors,
       # and external URLs. Verbose output, fails on broken links.
+      #
+      # --accept 401,403: many sites (reddit, meshcapade, nvcr.io registry)
+      # gate unauthenticated bots behind 401/403 while the URLs resolve fine
+      # in a browser — don't fail CI on those.
+      #
+      # The 'Humanoid Robot Info...' file is a raw team-notes dump (chat
+      # exports, placeholder URLs). It's archival, not authoritative docs,
+      # so we skip link-checking it.
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
             --verbose --no-progress
+            --accept 200..=299,401,403
             --exclude-path .claude
             --exclude-path GR00T-WholeBodyControl
             --exclude-path PromptHMR
             --exclude-path GMR
+            --exclude-path 'docs/Humanoid Robot Info for AI Lab People .md'
             './**/*.md'
           fail: true

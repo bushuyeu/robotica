@@ -1,0 +1,42 @@
+# Mirrors the checks in .github/workflows/lint.yml so local commits catch
+# the same issues CI would — no more "CI failed on trivial thing" cycles.
+#
+# Install: pipx install pre-commit && pre-commit install
+# Run ad-hoc: pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports]
+        files: ^robotica/
+        additional_dependencies: [numpy, joblib, python-dotenv]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=error]
+        files: ^setup\.sh$
+
+  - repo: local
+    hooks:
+      - id: just-validate
+        name: just --summary
+        entry: just --summary
+        language: system
+        files: ^Justfile$
+        pass_filenames: false
+      - id: doc-command-sync
+        name: Doc ↔ Justfile sync
+        entry: bash .github/scripts/check-doc-commands.sh
+        language: system
+        files: '^(README\.md|docs/.*\.md|Justfile)$'
+        pass_filenames: false
