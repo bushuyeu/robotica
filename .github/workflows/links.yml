@@ -19,7 +19,7 @@ jobs:
   lychee:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Walks every .md file, resolves relative links, section anchors,
       # and external URLs. Verbose output, fails on broken links.
