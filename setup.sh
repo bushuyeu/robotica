@@ -115,6 +115,31 @@ else
     ok "uv installed ($(uv --version))"
 fi
 
+# Use a uv-managed CPython 3.12 so C-extension deps (e.g. pyliblzfse) can
+# build without requiring distro `python3.12-dev` — managed builds bundle
+# Python.h. This avoids a sudo-apt step that trips up new users on systems
+# where the dev headers aren't preinstalled.
+export UV_PYTHON_PREFERENCE=only-managed
+if ! uv python list --only-installed 2>/dev/null | grep -q "cpython-3.12"; then
+    info "Installing uv-managed CPython 3.12..."
+    uv python install 3.12
+fi
+ok "uv-managed CPython 3.12 ready"
+
+# C compiler still required: pyliblzfse and friends compile from source.
+# Managed Python provides headers; the compiler has to come from the OS.
+echo ""
+echo "═══ Build-time prerequisites ═══"
+if command -v cc &>/dev/null || command -v gcc &>/dev/null; then
+    ok "C compiler available"
+else
+    preflight_fail "No C compiler (cc/gcc) found — needed to build Python C extensions.
+       Debian/Ubuntu: sudo apt install build-essential
+       Fedora/RHEL:   sudo dnf install gcc make
+       Arch:          sudo pacman -S base-devel"
+    exit 1
+fi
+
 # ── B: Install just ─────────────────────────────────────────────────────────
 echo ""
 echo "═══ B: just ═══"
