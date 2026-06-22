@@ -10,7 +10,7 @@ jobs:
     steps:
       # fetch-depth: 0 is required — commitlint inspects the full commit
       # range between the PR base and head.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
